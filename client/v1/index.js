@@ -29,8 +29,8 @@ console.log(MY_FAVORITE_DEALERS[0]);
 // 0. I have 2 favorite lego sets shopping communities stored in MY_FAVORITE_DEALERS variable
 // 1. Create a new variable and assign it the link of the lego set with the highest reduction I can find on these 2 websites
 // 2. Log the variable
-const linkOfBestLink = "https://www.avenuedelabrique.com/lego-movie/70828-le-bus-discotheque/p5212";
-console.log(linkOfBestLink);
+const linkOfHighestReduction = "https://www.avenuedelabrique.com/lego-movie/70828-le-bus-discotheque/p5212";
+console.log('Highest reduction link:', linkOfHighestReduction);
 
 /**
  * 🧱
@@ -45,7 +45,7 @@ console.log(linkOfBestLink);
 // 1. Create a variable and assign it the number of deals
 // 2. Log the variable
 const numberOfDeals = deals.length;
-console.log(numberOfDeals);
+console.log('Number of deals:', numberOfDeals);
 
 // 🎯 TODO 3: Website name
 // 1. Create a variable and assign it the list of shopping community name only
@@ -56,12 +56,15 @@ const namesOfShoppingCommunities = deals.map(deal => deal.community);
 console.log(namesOfShoppingCommunities);
 */
 const uniqueNamesOfShoppingCommunities = [...new Set(deals.map(deal => deal.community))];
-console.log(uniqueNamesOfShoppingCommunities);
+console.log('Unique names of shopping communities:', uniqueNamesOfShoppingCommunities);
 
 // 🎯 TODO 4: Sort by price
 // 1. Create a function to sort the deals by price
 // 2. Create a variable and assign it the list of sets by price from lowest to highest
 // 3. Log the variable
+const sortByPrice = (deals) => deals.sort((a, b) => a.price - b.price);
+const dealsSortedByPrice = sortByPrice([...deals]);
+console.log('Deals sorted by price:', dealsSortedByPrice);
 
 // 🎯 TODO 5: Sort by date
 // 1. Create a function to sort the deals by date
