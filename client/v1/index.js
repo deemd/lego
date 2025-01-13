@@ -51,6 +51,12 @@ console.log(numberOfDeals);
 // 1. Create a variable and assign it the list of shopping community name only
 // 2. Log the variable
 // 3. Log how many shopping communities we have
+/* // Warning : dupplicates!
+const namesOfShoppingCommunities = deals.map(deal => deal.community);
+console.log(namesOfShoppingCommunities);
+*/
+const uniqueNamesOfShoppingCommunities = [...new Set(deals.map(deal => deal.community))];
+console.log(uniqueNamesOfShoppingCommunities);
 
 // 🎯 TODO 4: Sort by price
 // 1. Create a function to sort the deals by price
