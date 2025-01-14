@@ -83,13 +83,15 @@ console.log('Deals with discounts between 50% and 75%:', filteredDeals);
 // 🎯 TODO 7: Average percentage discount
 // 1. Determine the average percentage discount of the deals
 // 2. Log the average
+const averageDiscount = deals.reduce((sum, deal) => sum + deal.discount, 0) / deals.length;
+console.log('Average discount:', averageDiscount);
 
 /**
  * 🏎
  * We are almost done with the `deals` variable
  * Keep pushing
  * 🏎
- */
+**/
 
 // 🎯 TODO 8: Deals by community
 // 1. Create an object called `communities` to manipulate deals by community name 
