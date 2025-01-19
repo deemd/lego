@@ -472,11 +472,15 @@ let sealedCamera = {
 // we make a copy of `sealedCamera` to `camera` variable
 // and set a new property `favorite` to true
 let camera = sealedCamera;
-
 camera.favorite = true;
 
 // 1. Log `sealedCamera` and `camera` variables
 // 2. What do you notice?
+console.log("SealedCamera:", sealedCamera);
+console.log("Camera:", camera);
+// Observations: Modifying `camera` also modifies `sealedCamera` as they refer to the same object. As such, we added a new property
+// `favorite` to true for the `camera` variable, and the log of `sealedCamera` appears now to have the new property as well without
+// us setting it directly.
 
 // we make (again) a new assignment again
 sealedCamera = {
