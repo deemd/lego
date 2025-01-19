@@ -419,11 +419,24 @@ const VINTED = [
  * 💶
  */
 
+
 // 🎯 TODO 11: Compute the average, the p5 and the p25 price value
 // 1. Compute the average price value of the listing
 // 2. Compute the p5 price value of the listing
 // 3. Compute the p25 price value of the listing
 // The p25 value (25th percentile) is the lower value expected to be exceeded in 25% of the vinted items
+const prices = VINTED.map(item => parseFloat(item.price));
+const getPercentile = (arr, percentile) => {
+  const sorted = [...arr].sort((a, b) => a - b);
+  const index = Math.ceil((percentile / 100) * sorted.length) - 1;
+  return sorted[index];
+};
+const averagePrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+const p5Price = getPercentile(prices, 5);
+const p25Price = getPercentile(prices, 25);
+console.log("Average price:", averagePrice);
+console.log("P5 price:", p5Price);
+console.log("P25 price:", p25Price);
 
 // 🎯 TODO 12: Very old listed items
 // // 1. Log if we have very old items (true or false)
@@ -437,7 +450,7 @@ const VINTED = [
 // 1. Delete the item with the uuid `f2c5377c-84f9-571d-8712-98902dcbb913`
 // 2. Log the new list of items
 
-// 🎯 TODO 5: Save a favorite item
+// 🎯 TODO 15: Save a favorite item
 // We declare and assign a variable called `sealedCamera`
 let sealedCamera = {
   link: "https://www.vinted.fr/items/5563396347-lego-43230-omaggio-a-walter-disney-misb",
