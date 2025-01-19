@@ -492,9 +492,12 @@ sealedCamera = {
 };
 
 // 3. Update `camera` property with `favorite` to true WITHOUT changing sealedCamera properties
+camera = { ...sealedCamera, favorite: true };
+console.log("Updated Camera:", camera);
+console.log("SealedCamera after new assignment:", sealedCamera);
+// The two variables are now independent.
 
-
-// 🎯 TODO 11: Compute the profitability
+// 🎯 TODO 16: Compute the profitability
 // From a specific deal called `deal`
 const deal = {
   'title':  'La caméra Hommage à Walt Disney',
