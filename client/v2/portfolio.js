@@ -32,6 +32,7 @@ const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
+const spanMostCommented = document.querySelector('#most-commented-filter');
 
 /**
  * Set global value
@@ -168,6 +169,16 @@ selectPage.addEventListener('change', async (event) => {
  */
 spanBestDiscount.addEventListener('click', () => {
   const filteredDeals = currentDeals.filter(deal => deal.discount > 50);
+
+  setCurrentDeals({result: filteredDeals, meta: currentPagination});
+  render(filteredDeals, currentPagination);
+});
+
+/**
+ * Select the current deals with more than 15 comments
+ */
+spanMostCommented.addEventListener('click', () => {
+  const filteredDeals = currentDeals.filter(deal => deal.comments > 15); // With 15 we don't get any deal, however with 3+ it works fine
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentPagination);
