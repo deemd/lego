@@ -33,6 +33,7 @@ const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
+const spanHotDeals = document.querySelector('#hot-deals-filter');
 
 /**
  * Set global value
@@ -179,6 +180,16 @@ spanBestDiscount.addEventListener('click', () => {
  */
 spanMostCommented.addEventListener('click', () => {
   const filteredDeals = currentDeals.filter(deal => deal.comments > 15); // With 15 we don't get any deal, however with 3+ it works fine
+
+  setCurrentDeals({result: filteredDeals, meta: currentPagination});
+  render(filteredDeals, currentPagination);
+});
+
+/**
+ * Select the current deals with a temperature greater than 100
+ */
+spanHotDeals.addEventListener('click', () => {
+  const filteredDeals = currentDeals.filter(deal => deal.temperature > 100);
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentPagination);
