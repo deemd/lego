@@ -215,6 +215,24 @@ selectSort.addEventListener('change', () => {
 });
 
 /**
+ * Sort for cheap and expensive
+ */
+selectSort.addEventListener('change', () => {
+  const sortValue = selectSort.value;
+  const sortedDeals = [...currentDeals].sort((a, b) => {
+    if (sortValue === 'date-asc') {
+      return a.published - b.published; // ascending date
+    } else if (sortValue === 'date-desc') {
+      return b.published - a.published; // descending date
+    }
+    return 0; // Default case (no sorting)
+  });
+
+  setCurrentDeals({result: sortedDeals, meta: currentPagination});
+  render(sortedDeals, currentPagination);
+});
+
+/**
  * Combine all sort selects
  */
 /*
