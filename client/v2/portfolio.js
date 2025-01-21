@@ -34,6 +34,7 @@ const spanNbDeals = document.querySelector('#nbDeals');
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
 const spanHotDeals = document.querySelector('#hot-deals-filter');
+const selectSort = document.querySelector('#sort-select');
 
 /**
  * Set global value
@@ -194,6 +195,48 @@ spanHotDeals.addEventListener('click', () => {
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentPagination);
 });
+
+/**
+ * Sort for cheap and expensive
+ */
+selectSort.addEventListener('change', () => {
+  const sortValue = selectSort.value;
+  const sortedDeals = [...currentDeals].sort((a, b) => {
+    if (sortValue === 'price-asc') {
+      return a.price - b.price; // ascending price
+    } else if (sortValue === 'price-desc') {
+      return b.price - a.price; // descending price
+    }
+    return 0; // Default case (no sorting)
+  });
+
+  setCurrentDeals({result: sortedDeals, meta: currentPagination});
+  render(sortedDeals, currentPagination);
+});
+
+/**
+ * Combine all sort selects
+ */
+/*
+selectSort.addEventListener('change', () => {
+  const sortValue = selectSort.value;
+  const sortedDeals = [...currentDeals].sort((a, b) => {
+    if (sortValue === 'price-asc') {
+      return a.price - b.price; // ascending price
+    } else if (sortValue === 'price-desc') {
+      return b.price - a.price; // descending price
+    } else if (sortValue === 'date-asc') {
+      return new Date(a.date) - new Date(b.date); // ascending date
+    } else if (sortValue === 'date-desc') {
+      return new Date(b.date) - new Date(a.date); // descending date
+    }
+    return 0; // Default case (no sorting)
+  });
+
+  setCurrentDeals({result: sortedDeals, meta: currentPagination});
+  render(sortedDeals, currentPagination);
+});
+*/
 
 document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
