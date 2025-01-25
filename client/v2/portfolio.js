@@ -24,6 +24,7 @@ This endpoint accepts the following optional query string parameters:
 // current deals on the page
 let currentDeals = [];
 let currentPagination = {};
+let currentSales = [];
 
 // instantiate the selectors
 const selectShow = document.querySelector('#show-select');
@@ -31,10 +32,12 @@ const selectPage = document.querySelector('#page-select');
 const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
+const spanNbSales = document.querySelector('#nbSales');
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
 const spanHotDeals = document.querySelector('#hot-deals-filter');
 const selectSort = document.querySelector('#sort-select');
+const sectionSales= document.querySelector('#sales');
 
 /**
  * Set global value
@@ -44,6 +47,14 @@ const selectSort = document.querySelector('#sort-select');
 const setCurrentDeals = ({result, meta}) => {
   currentDeals = result;
   currentPagination = meta;
+};
+
+/**
+ * Set global value for sales
+ * @param {Array} result - sales to display
+ */
+const setCurrentSales = ({result}) => {
+  currentSales = result;
 };
 
 /**
@@ -72,12 +83,11 @@ const fetchDeals = async (page = 1, size = 6) => {
 };
 
 /**
- * Fetch deals from api
- * @param  {Number}  [page=1] - current page to fetch
- * @param  {Number}  [size=12] - size of the page
- * @return {Object}
+ * Fetch sales from API
+ * @param  {Number}  [id=1] - current id to fetch
+ * @return {Object} - sales data
  */
-const fetchSales = async (id = 1) => {
+const fetchSales = async (id = 42182) => {
   try {
     const response = await fetch(
       `https://lego-api-blue.vercel.app/sales?id=${id}`
@@ -86,13 +96,13 @@ const fetchSales = async (id = 1) => {
 
     if (body.success !== true) {
       console.error(body);
-      return {currentDeals, currentPagination};
+      return {currentSales};
     }
 
     return body.data;
   } catch (error) {
     console.error(error);
-    return {currentDeals, currentPagination};
+    return {currentSales};
   }
 };
 
@@ -119,6 +129,30 @@ const renderDeals = deals => {
   fragment.appendChild(div);
   sectionDeals.innerHTML = '<h2>Deals</h2>';
   sectionDeals.appendChild(fragment);
+};
+
+/**
+ * Render list of sales
+ * @param  {Array} sales
+ */
+const renderSales = sales => {
+  const fragment = document.createDocumentFragment();
+  const div = document.createElement('div');
+  const template = sales
+    .map(sale => {
+      return `
+      <div class="sale" id=${sale.uuid}>
+        <a href="${sale.link}">${sale.title}</a>
+        <span>${sale.price}</span>
+      </div>
+    `;
+    })
+    .join('');
+
+  div.innerHTML = template;
+  fragment.appendChild(div);
+  sectionSales.innerHTML = '<h2>Vinted Sales</h2>';
+  sectionSales.appendChild(fragment);
 };
 
 /**
@@ -157,13 +191,15 @@ const renderIndicators = pagination => {
   const {count} = pagination;
 
   spanNbDeals.innerHTML = count;
+  spanNbSales.innerHTML = currentSales.length;
 };
 
-const render = (deals, pagination) => {
+const render = (deals, sales, pagination) => {
   renderDeals(deals);
+  renderSales(sales);
   renderPagination(pagination);
   renderIndicators(pagination);
-  renderLegoSetIds(deals)
+  renderLegoSetIds(deals);
 };
 
 /**
@@ -177,8 +213,19 @@ selectShow.addEventListener('change', async (event) => {
   const deals = await fetchDeals(currentPagination.currentPage, parseInt(event.target.value));
 
   setCurrentDeals(deals);
-  render(currentDeals, currentPagination);
+  render(currentDeals, currentSales, currentPagination);
 });
+
+/**
+ * Select the sales to display given the selected id set
+ */
+selectLegoSetIds.addEventListener("change", async (event) => {
+  const sales = await fetchSales(parseInt(event.target.value));
+
+  setCurrentSales(sales);
+  render(currentDeals, currentSales, currentPagination);
+});
+
 
 /**
  * Select the page to display
@@ -188,7 +235,7 @@ selectPage.addEventListener('change', async (event) => {
   const deals = await fetchDeals(selectedPage, currentPagination.pageSize); // Fetch deals for the selected page
 
   setCurrentDeals(deals); // Update global state
-  render(currentDeals, currentPagination); // Re-render the UI
+  render(currentDeals, currentSales, currentPagination); // Re-render the UI
 });
 
 /**
@@ -198,7 +245,7 @@ spanBestDiscount.addEventListener('click', () => {
   const filteredDeals = currentDeals.filter(deal => deal.discount > 50);
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
-  render(filteredDeals, currentPagination);
+  render(filteredDeals, currentSales, currentPagination);
 });
 
 /**
@@ -208,7 +255,7 @@ spanMostCommented.addEventListener('click', () => {
   const filteredDeals = currentDeals.filter(deal => deal.comments > 15); // With 15 we don't get any deal, however with 3+ it works fine
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
-  render(filteredDeals, currentPagination);
+  render(filteredDeals, currentSales, currentPagination);
 });
 
 /**
@@ -218,7 +265,7 @@ spanHotDeals.addEventListener('click', () => {
   const filteredDeals = currentDeals.filter(deal => deal.temperature > 100);
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
-  render(filteredDeals, currentPagination);
+  render(filteredDeals, currentSales, currentPagination);
 });
 
 /**
@@ -236,7 +283,7 @@ selectSort.addEventListener('change', () => {
   });
 
   setCurrentDeals({result: sortedDeals, meta: currentPagination});
-  render(sortedDeals, currentPagination);
+  render(sortedDeals, currentSales, currentPagination);
 });
 
 /**
@@ -254,7 +301,7 @@ selectSort.addEventListener('change', () => {
   });
 
   setCurrentDeals({result: sortedDeals, meta: currentPagination});
-  render(sortedDeals, currentPagination);
+  render(sortedDeals, currentSales, currentPagination);
 });
 
 /**
@@ -283,7 +330,9 @@ selectSort.addEventListener('change', () => {
 
 document.addEventListener('DOMContentLoaded', async () => {
   const deals = await fetchDeals();
+  const sales = await fetchSales();
 
   setCurrentDeals(deals);
-  render(currentDeals, currentPagination);
+  setCurrentSales(sales);
+  render(currentDeals, currentSales, currentPagination);
 });
