@@ -191,7 +191,7 @@ const renderIndicators = pagination => {
   const {count} = pagination;
 
   spanNbDeals.innerHTML = count;
-  spanNbSales.innerHTML = currentSales.length;
+  spanNbSales.innerHTML = currentSales.length; // display current sales count
 };
 
 const render = (deals, sales, pagination) => {
