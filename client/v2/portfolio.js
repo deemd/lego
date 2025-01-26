@@ -41,6 +41,7 @@ const spanLifetime = document.querySelector("#lifetime-value");
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
 const spanHotDeals = document.querySelector('#hot-deals-filter');
+const spanFavorites = document.querySelector('#favorite-filter');
 const selectSort = document.querySelector('#sort-select');
 const sectionSales= document.querySelector('#sales');
 
@@ -118,7 +119,7 @@ const fetchSales = async (id = 42182) => {
 const renderDeals = deals => {
   const fragment = document.createDocumentFragment();
   const div = document.createElement('div');
-  const template = deals
+  /* const template = deals
     .map(deal => {
       return `
       <div class="deal" id=${deal.uuid}>
@@ -128,12 +129,37 @@ const renderDeals = deals => {
       </div>
     `;
     })
-    .join('');
+    .join(''); */
+
+    const template = deals
+      .map((deal) => {
+        const isFavorite = isFavoriteDeal(deal.uuid); // Vérifie si le deal est favori
+        return `
+        <div class="deal" id=${deal.uuid}>
+          <span>${deal.id}</span>
+          <a href="${deal.link}" target="_blank">${deal.title}</a>
+          <span>${deal.price}</span>
+          <button class="favorite-btn" data-uuid="${deal.uuid}">
+            ${isFavorite ? '★ Remove Favorite' : '☆ Add Favorite'}
+          </button>
+        </div>
+      `;
+      })
+      .join('');
 
   div.innerHTML = template;
   fragment.appendChild(div);
   sectionDeals.innerHTML = '<h2>Deals</h2>';
   sectionDeals.appendChild(fragment);
+
+  // Ajout d'un listener pour les boutons favoris
+  document.querySelectorAll('.favorite-btn').forEach((button) => {
+    button.addEventListener('click', (e) => {
+      const uuid = e.target.dataset.uuid;
+      toggleFavoriteDeal(uuid);
+      renderDeals(deals); // Recharge les deals pour mettre à jour les favoris
+    });
+  });
 };
 // <a href="${deal.link}">${deal.title}</a>
 
@@ -273,6 +299,27 @@ const calculateLifetimeValue = (sales) => {
   return `${lifetimeInDays} days`;
 };
 
+// Gestion des favoris
+const toggleFavoriteDeal = (uuid) => {
+  let favorites = JSON.parse(localStorage.getItem('favoriteDeals')) || [];
+  if (favorites.includes(uuid)) {
+    favorites = favorites.filter((fav) => fav !== uuid);
+  } else {
+    favorites.push(uuid);
+  }
+  localStorage.setItem('favoriteDeals', JSON.stringify(favorites));
+};
+
+/**
+ * Check if a deal is favorite
+ * @param  {String} uuid
+ * @returns {Boolean}
+ */
+const isFavoriteDeal = (uuid) => {
+  const favorites = JSON.parse(localStorage.getItem('favoriteDeals')) || [];
+  return favorites.includes(uuid);
+};
+
 /**
  * Declaration of all Listeners
  */
@@ -378,6 +425,23 @@ spanHotDeals.addEventListener('click', () => {
     selectLegoSetIds.value = savedSetId;
   }
 });
+
+/**
+ * Select the current favorite deals
+ *
+spanFavorites.addEventListener('click', () => {
+  const favorites = JSON.parse(localStorage.getItem('favoriteDeals')) || [];
+  const filteredDeals = currentDeals.filter(deal => favorites.includes(deal.uuid));
+
+  setCurrentDeals({result: filteredDeals, meta: currentPagination});
+  render(filteredDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
+});*/
 
 /**
  * Sort for cheap and expensive
