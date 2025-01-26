@@ -123,7 +123,7 @@ const renderDeals = deals => {
       return `
       <div class="deal" id=${deal.uuid}>
         <span>${deal.id}</span>
-        <a href="${deal.link}">${deal.title}</a>
+        <a href="${deal.link}" target="_blank">${deal.title}</a> <!-- Open in new tab -->
         <span>${deal.price}</span>
       </div>
     `;
@@ -135,6 +135,7 @@ const renderDeals = deals => {
   sectionDeals.innerHTML = '<h2>Deals</h2>';
   sectionDeals.appendChild(fragment);
 };
+// <a href="${deal.link}">${deal.title}</a>
 
 /**
  * Render list of sales
