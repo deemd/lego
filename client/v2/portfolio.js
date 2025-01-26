@@ -33,6 +33,10 @@ const selectLegoSetIds = document.querySelector('#lego-set-id-select');
 const sectionDeals= document.querySelector('#deals');
 const spanNbDeals = document.querySelector('#nbDeals');
 const spanNbSales = document.querySelector('#nbSales');
+const spanAvgPrice = document.querySelector("#average-price");
+const spanP5Price = document.querySelector("#p5-price");
+const spanP25Price = document.querySelector("#p25-price");
+const spanP50Price = document.querySelector("#p50-price");
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
 const spanHotDeals = document.querySelector('#hot-deals-filter');
@@ -184,22 +188,63 @@ const renderLegoSetIds = deals => {
 };
 
 /**
- * Render page selector
+ * Render page selector + price indicators
  * @param  {Object} pagination
+ * @param  {Object} indicators - { average, p5, p25, p50 }
  */
-const renderIndicators = pagination => {
+const renderIndicators = (pagination, { average, p5, p25, p50 }) => {
   const {count} = pagination;
 
   spanNbDeals.innerHTML = count;
   spanNbSales.innerHTML = currentSales.length; // display current sales count
+
+  // compute price indicators
+  spanAvgPrice.innerHTML = average;
+  spanP5Price.innerHTML = p5;
+  spanP25Price.innerHTML = p25;
+  spanP50Price.innerHTML = p50;
 };
+
+/**
+ * Render price indicators
+ * @param {Object} indicators - { average, p5, p25, p50 }
+ 
+const renderPriceIndicators = ({ average, p5, p25, p50 }) => {
+  spanAvgPrice.innerHTML = average;
+  spanP5Price.innerHTML = p5;
+  spanP25Price.innerHTML = p25;
+  spanP50Price.innerHTML = p50;
+};*/
 
 const render = (deals, sales, pagination) => {
   renderDeals(deals);
   renderSales(sales);
   renderPagination(pagination);
-  renderIndicators(pagination);
+  renderIndicators(pagination, calculatePriceIndicators(deals, sales));
   renderLegoSetIds(deals);
+};
+
+/**
+ * Calculate average, p5, p25, and p50 values
+ * @returns  {Object} - Calculated statistics
+ */
+const calculatePriceIndicators = (deals, sales) => {
+  // add fetch prices
+  // Combine prices from both deals and sales
+  const dealPrices = deals.map((deal) => parseFloat(deal.price));
+  const salePrices = sales.map((sale) => parseFloat(sale.price));
+  const prices = [...dealPrices, ...salePrices];
+
+  if (!prices.length) return { average: 0, p5: 0, p25: 0, p50: 0 };
+
+  const sortedPrices = [...prices].sort((a, b) => a - b); // Sort prices ascending
+  const average = (sortedPrices.reduce((sum, price) => sum + price, 0) / prices.length).toFixed(2);
+
+  const p5 = sortedPrices[Math.floor(0.05 * (prices.length - 1))].toFixed(2);
+  const p25 = sortedPrices[Math.floor(0.25 * (prices.length - 1))].toFixed(2);
+  const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
+
+  return { average, p5, p25, p50 };
 };
 
 /**
@@ -214,16 +259,32 @@ selectShow.addEventListener('change', async (event) => {
 
   setCurrentDeals(deals);
   render(currentDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
  * Select the sales to display given the selected id set
  */
 selectLegoSetIds.addEventListener("change", async (event) => {
-  const sales = await fetchSales(parseInt(event.target.value));
+  const selectedSetId = parseInt(event.target.value);
+  const sales = await fetchSales(selectedSetId);
+
+  // Store the selected value in localStorage
+  localStorage.setItem("selectedSetId", selectedSetId);
 
   setCurrentSales(sales);
   render(currentDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 
@@ -236,6 +297,12 @@ selectPage.addEventListener('change', async (event) => {
 
   setCurrentDeals(deals); // Update global state
   render(currentDeals, currentSales, currentPagination); // Re-render the UI
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -246,6 +313,12 @@ spanBestDiscount.addEventListener('click', () => {
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -256,6 +329,12 @@ spanMostCommented.addEventListener('click', () => {
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -266,6 +345,12 @@ spanHotDeals.addEventListener('click', () => {
 
   setCurrentDeals({result: filteredDeals, meta: currentPagination});
   render(filteredDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -284,6 +369,12 @@ selectSort.addEventListener('change', () => {
 
   setCurrentDeals({result: sortedDeals, meta: currentPagination});
   render(sortedDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -302,6 +393,12 @@ selectSort.addEventListener('change', () => {
 
   setCurrentDeals({result: sortedDeals, meta: currentPagination});
   render(sortedDeals, currentSales, currentPagination);
+
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
 
 /**
@@ -335,4 +432,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setCurrentDeals(deals);
   setCurrentSales(sales);
   render(currentDeals, currentSales, currentPagination);
+  const savedSetId = localStorage.getItem("selectedSetId");
+  if (savedSetId) {
+    // Set the select element to the saved value
+    selectLegoSetIds.value = savedSetId;
+  }
 });
