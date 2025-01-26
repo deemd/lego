@@ -148,7 +148,7 @@ const renderSales = sales => {
     .map(sale => {
       return `
       <div class="sale" id=${sale.uuid}>
-        <a href="${sale.link}">${sale.title}</a>
+        <a href="${sale.link}" target="_blank">${sale.title}</a> <!-- Open in new tab -->
         <span>${sale.price}</span>
       </div>
     `;
@@ -160,6 +160,7 @@ const renderSales = sales => {
   sectionSales.innerHTML = '<h2>Vinted Sales</h2>';
   sectionSales.appendChild(fragment);
 };
+// <a href="${sale.link}">${sale.title}</a>
 
 /**
  * Render page selector
