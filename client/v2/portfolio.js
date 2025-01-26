@@ -428,7 +428,7 @@ spanHotDeals.addEventListener('click', () => {
 
 /**
  * Select the current favorite deals
- *
+ */
 spanFavorites.addEventListener('click', () => {
   const favorites = JSON.parse(localStorage.getItem('favoriteDeals')) || [];
   const filteredDeals = currentDeals.filter(deal => favorites.includes(deal.uuid));
@@ -441,7 +441,7 @@ spanFavorites.addEventListener('click', () => {
     // Set the select element to the saved value
     selectLegoSetIds.value = savedSetId;
   }
-});*/
+});
 
 /**
  * Sort for cheap and expensive
