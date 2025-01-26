@@ -37,6 +37,7 @@ const spanAvgPrice = document.querySelector("#average-price");
 const spanP5Price = document.querySelector("#p5-price");
 const spanP25Price = document.querySelector("#p25-price");
 const spanP50Price = document.querySelector("#p50-price");
+const spanLifetime = document.querySelector("#lifetime-value");
 const spanBestDiscount = document.querySelector('#best-discount-filter'); // target the "By best discount" span by ID
 const spanMostCommented = document.querySelector('#most-commented-filter');
 const spanHotDeals = document.querySelector('#hot-deals-filter');
@@ -192,17 +193,20 @@ const renderLegoSetIds = deals => {
  * @param  {Object} pagination
  * @param  {Object} indicators - { average, p5, p25, p50 }
  */
-const renderIndicators = (pagination, { average, p5, p25, p50 }) => {
+const renderIndicators = (pagination, { average, p5, p25, p50 }, lifetime) => {
   const {count} = pagination;
 
   spanNbDeals.innerHTML = count;
   spanNbSales.innerHTML = currentSales.length; // display current sales count
 
-  // compute price indicators
+  // price indicators
   spanAvgPrice.innerHTML = average;
   spanP5Price.innerHTML = p5;
   spanP25Price.innerHTML = p25;
   spanP50Price.innerHTML = p50;
+
+  // lifetime indicator
+  spanLifetime.innerHTML = lifetime;
 };
 
 /**
@@ -220,7 +224,7 @@ const render = (deals, sales, pagination) => {
   renderDeals(deals);
   renderSales(sales);
   renderPagination(pagination);
-  renderIndicators(pagination, calculatePriceIndicators(deals, sales));
+  renderIndicators(pagination, calculatePriceIndicators(deals, sales), calculateLifetimeValue(sales));
   renderLegoSetIds(deals);
 };
 
@@ -245,6 +249,26 @@ const calculatePriceIndicators = (deals, sales) => {
   const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
 
   return { average, p5, p25, p50 };
+};
+
+/**
+ * Calculate the lifetime value for a set
+ * @param {Array} sales - List of sales data
+ * @returns {String} Lifetime value in days or "No sales" if no data
+ */
+const calculateLifetimeValue = (sales) => {
+  if (sales.length === 0) {
+    return "No sales"; // No sales data available
+  }
+
+  const dates = sales.map((sale) => new Date(sale.published));
+  const earliestDate = new Date(Math.min(...dates));
+  const latestDate = new Date(Math.max(...dates));
+
+  const lifetimeInMs = latestDate - earliestDate; // Difference in milliseconds
+  const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24)); // Convert to days
+
+  return `${lifetimeInDays} days`;
 };
 
 /**
