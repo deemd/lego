@@ -23,9 +23,16 @@ const parse = data => {
           .text()
       ));
 
+      // Feature: image link
+      const IMAGE_PATH = $(element)
+      .find('span.prodl-img img')
+      .attr('data-src') || '';
+      const image = 'https://www.avenuedelabrique.com/img/' + IMAGE_PATH;
+
       return {
         discount,
         price,
+        image,
         'title': $(element).attr('title'),
       };
     })
