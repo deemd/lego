@@ -1,6 +1,8 @@
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 
+
+
 /**
  * Parse webpage data response
  * @param  {String} data - html response
@@ -10,7 +12,62 @@ const parse = data => {
   const $ = cheerio.load(data, {'xmlMode': true});
 
   return $('div.js-threadList article')
+    .map((_, element) => {
+      const link = $(element)
+        .find('a[data-t=threadLink]')
+        .attr('href');
+      
+      const data = JSON.parse($(element)
+      .find('div.js-vue2')
+      .attr('data-vue2'));
+
+      // console.log(data);
+
+      const thread = data.props.thread;
+      const retail = thread.nextBestPrice;
+      const price = thread.price;
+      const discount = parseInt((retail-price)/retail*100);
+      const temperature = +thread.temperature;
+      const photo = `https://static-pepper.dealabs.com/threads/raw/${thread.mainImage.slotId}/${thread.mainImage.name}/re/300x300/qt/60/${thread.mainImage.name}.${thread.mainImage.ext}`;
+      const comments = +thread.commentCount;
+      const published = thread.publishedAt;
+      const title = thread.title;
+      const id = thread.threadId;
+      
+      return {
+        link,
+        retail,
+        price,
+        discount,
+        temperature,
+        photo,
+        comments,
+        published,
+        title,
+        id
+      };
+    })
+    .get();
+};
+
+
+
+
+
+
+/**
+ * Parse webpage data response
+ * @param  {String} data - html response
+ * @return {Object} deal
+ */
+/*const parse = data => {
+  const $ = cheerio.load(data, {'xmlMode': true});
+
+  return $('div.js-threadList article')
     .map((i, element) => {
+      
+      
+
       const price = parseFloat(
         $(element)
           .find('div.threadListCard-body span.thread-price')
@@ -31,7 +88,7 @@ const parse = data => {
       const IMAGE_PATH = $(element)
       .find('span.prodl-img img')
       .attr('data-src') || '';
-      const image = 'https://www.avenuedelabrique.com/img/' + IMAGE_PATH;*/
+      const image = 'https://www.avenuedelabrique.com/img/' + IMAGE_PATH; //
 
       return {
         discount,
@@ -40,7 +97,7 @@ const parse = data => {
       };
     })
     .get();
-};
+};*/
 
 
 /**
@@ -63,7 +120,7 @@ module.exports.scrape = async url => {
       const body = await response.text();
       return parse(body);
     } catch (error) {
-      console.error(`Error scraping ${url}:, error.message`);
+      console.error(`Error scraping ${url}:, ${error.message}`);
       return null;
     }
   };
