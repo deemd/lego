@@ -1,6 +1,6 @@
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
-
+const fs = require('fs');
 
 
 /**
@@ -118,7 +118,9 @@ module.exports.scrape = async url => {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   
       const body = await response.text();
-      return parse(body);
+      const parsedData = parse(body);
+      fs.writeFileSync('dealabsData.json', JSON.stringify(parsedData, null, 2));
+      return parsedData;
     } catch (error) {
       console.error(`Error scraping ${url}:, ${error.message}`);
       return null;
