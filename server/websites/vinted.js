@@ -1,4 +1,4 @@
-// const fetch = require('node-fetch');
+const fetch = require('node-fetch');
 const cheerio = require('cheerio');
 
 /**
@@ -60,7 +60,7 @@ const scrape = async searchText => {
 
         if(response.ok){
             const body = await response.json();
-            return parse(body);
+            return parseJSON(body); // parse(body)
         }
 
         console.error(response);
@@ -91,4 +91,4 @@ const scrapeWithoutCookies = async searchText => {
     }
 };
 
-export {scrape}
+module.exports.scrape = scrape; // export {scrape};
