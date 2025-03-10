@@ -18,7 +18,6 @@ const connectDB = async () => {
     return db;
 };
 
-
 const loadAndInsertData = async () => {
     try {
         const db = await connectDB();
