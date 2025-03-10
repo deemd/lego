@@ -55,14 +55,11 @@ const insertSales = async (sales) => {
     console.log(result);
 };
 
-loadAndInsertData();
+// loadAndInsertData();
 
 
 
 // -------------------------------------------------------------------------------------------------------
-
-
-/*
 
 // 🔎 1. Trouver les meilleurs rabais
 const findBestDiscountDeals = async () => {
@@ -82,7 +79,10 @@ const findMostCommentedDeals = async () => {
     return deals;
 };
 
+findMostCommentedDeals();
 
+
+/*
 
 // 🔎 3. Trouver les deals triés par prix
 const findDealsSortedByPrice = async () => {
