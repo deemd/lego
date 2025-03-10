@@ -1,25 +1,12 @@
 const { MongoClient } = require('mongodb');
+const fs = require('fs');
+const path = require('path');
 
-const MONGODB_URI = 'mongodb+srv://heloiserobin:kp8OJ7GkYKAMLfo1@<hostname>/?ssl=true&replicaSet=atlas-uz8mlg-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://heloiserobin:kp8OJ7GkYKAMLfo1@cluster0.du33m.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 const MONGODB_DB_NAME = 'lego';
 
-const client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true });
-const db = client.db(MONGODB_DB_NAME);
-
-const deals = [];
-
-const collection = db.collection('deals');
-const result = await collection.insertMany(deals);
-
-console.log(result);
-
-const legoSetId = '42156';
-const salesCollection = db.collection('sales');
-const sales = await salesCollection.find({ legoSetId }).toArray();
-
-console.log(sales);
-
-
+let client;
+let db;
 
 // Connexion à la base MongoDB
 const connectDB = async () => {
@@ -31,7 +18,29 @@ const connectDB = async () => {
     return db;
 };
 
-// 🔹 Insérer les deals
+/*
+const loadAndInsertData = async () => {
+    try {
+        const db = await connectDB();
+
+        // Read & insert deals
+        const dealsData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'dealabsData.json'), 'utf-8'));
+        await insertDeals(dealsData);
+        console.log('✅ Deals insérés avec succès');
+
+        // Read & insert sales
+        const salesData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'vintedData.json'), 'utf-8'));
+        await insertSales(salesData);
+        console.log('✅ Sales insérés avec succès');
+
+    } catch (error) {
+        console.error('❌ Erreur lors de l’insertion des données :', error);
+    } finally {
+        client.close(); // Close database connection
+    }
+};
+
+// Insert deals from DEALABS
 const insertDeals = async (deals) => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -39,13 +48,22 @@ const insertDeals = async (deals) => {
     console.log(result);
 };
 
-// 🔹 Insérer les ventes
+// Insert sales from VINTED
 const insertSales = async (sales) => {
     const db = await connectDB();
     const collection = db.collection('sales');
     const result = await collection.insertMany(sales);
     console.log(result);
 };
+
+loadAndInsertData();
+
+*/
+
+// -------------------------------------------------------------------------------------------------------
+
+
+/*
 
 // 🔎 1. Trouver les meilleurs rabais
 const findBestDiscountDeals = async () => {
@@ -64,6 +82,8 @@ const findMostCommentedDeals = async () => {
     console.log(deals);
     return deals;
 };
+
+
 
 // 🔎 3. Trouver les deals triés par prix
 const findDealsSortedByPrice = async () => {
@@ -116,3 +136,24 @@ module.exports = {
     findRecentSales
 };
 
+
+*/
+
+
+
+
+/*
+const deals = [];
+
+const dealsCollection = db.collection('deals');
+const dealsResult = await collection.insertMany(deals);
+
+console.log(result);
+
+const sales = [];
+
+const legoSetId = '42156';
+const salesCollection = db.collection('sales');
+const salesResult = await salesCollection.find({ legoSetId }).toArray();
+
+console.log(sales);*/
