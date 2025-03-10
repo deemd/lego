@@ -47,7 +47,7 @@ const insertDeals = async (deals) => {
     const result = await collection.insertMany(deals);
     console.log(result);
 };
-/*
+
 // Insert sales from VINTED
 const insertSales = async (sales) => {
     const db = await connectDB();
@@ -58,7 +58,7 @@ const insertSales = async (sales) => {
 
 loadAndInsertData();
 
-*/
+
 
 // -------------------------------------------------------------------------------------------------------
 
