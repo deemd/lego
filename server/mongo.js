@@ -95,18 +95,25 @@ const findDealsSortedByPriceDesc = async () => {
     return deals;
 };
 
-findDealsSortedByPriceAsc();
-
-/*
-
 // 🔎 4. Trouver les deals triés par date
-const findDealsSortedByDate = async () => {
+const findDealsSortedByDateOld = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
-    const deals = await collection.find().sort({ date: -1 }).toArray();
+    const deals = await collection.find().sort({ published: 1 }).toArray();
     console.log(deals);
     return deals;
 };
+const findDealsSortedByDateNew = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ published: -1 }).toArray();
+    console.log(deals);
+    return deals;
+};
+
+findDealsSortedByDateNew();
+
+/*
 
 // 🔎 5. Trouver toutes les ventes pour un set LEGO donné
 const findSalesByLegoSetId = async (legoSetId) => {
