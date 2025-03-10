@@ -79,19 +79,25 @@ const findMostCommentedDeals = async () => {
     return deals;
 };
 
-findMostCommentedDeals();
-
-
-/*
-
-// 🔎 3. Trouver les deals triés par prix
-const findDealsSortedByPrice = async () => {
+// 🔎 3. Trouver les deals triés par prix (Asc/Desc)
+const findDealsSortedByPriceAsc = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
     const deals = await collection.find().sort({ price: 1 }).toArray();
     console.log(deals);
     return deals;
 };
+const findDealsSortedByPriceDesc = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ price: -1 }).toArray();
+    console.log(deals);
+    return deals;
+};
+
+findDealsSortedByPriceAsc();
+
+/*
 
 // 🔎 4. Trouver les deals triés par date
 const findDealsSortedByDate = async () => {
