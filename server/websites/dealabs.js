@@ -56,51 +56,6 @@ const parse = data => {
 
 
 /**
- * Parse webpage data response
- * @param  {String} data - html response
- * @return {Object} deal
- */
-/*const parse = data => {
-  const $ = cheerio.load(data, {'xmlMode': true});
-
-  return $('div.js-threadList article')
-    .map((i, element) => {
-      
-      
-
-      const price = parseFloat(
-        $(element)
-          .find('div.threadListCard-body span.thread-price')
-          .text()
-      );
-
-      const discount = Math.abs(parseInt(
-        $(element)
-          .find('span.textBadge.bRad--a-m.flex--inline.text--b.boxAlign-ai--all-c.size--all-s.size--fromW3-m.space--h-1.space--ml-1.space--mr-0.textBadge--green')
-          .text()
-      ));
-
-      const title = $(element)
-      .find('div.threadListCard-body a')
-      .attr('title');
-
-      /* Feature: image link
-      const IMAGE_PATH = $(element)
-      .find('span.prodl-img img')
-      .attr('data-src') || '';
-      const image = 'https://www.avenuedelabrique.com/img/' + IMAGE_PATH; //
-
-      return {
-        discount,
-        price,
-        title,
-      };
-    })
-    .get();
-};*/
-
-
-/**
  * Scrape a given URL page
  * @param {String} url - URL to parse
  * @returns {Promise<Array|null>} Extracted deals

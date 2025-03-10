@@ -61,7 +61,7 @@ const insertSales = async (sales) => {
 
 // -------------------------------------------------------------------------------------------------------
 
-// 🔎 1. Trouver les meilleurs rabais
+// Best Discount
 const findBestDiscountDeals = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -70,7 +70,7 @@ const findBestDiscountDeals = async () => {
     return deals;
 };
 
-// 🔎 2. Trouver les deals les plus commentés
+// Most Commented
 const findMostCommentedDeals = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -79,7 +79,7 @@ const findMostCommentedDeals = async () => {
     return deals;
 };
 
-// 🔎 3. Trouver les deals triés par prix (Asc/Desc)
+// Sorted Price (Asc/Desc)
 const findDealsSortedByPriceAsc = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -95,7 +95,7 @@ const findDealsSortedByPriceDesc = async () => {
     return deals;
 };
 
-// 🔎 4. Trouver les deals triés par date
+// Sorted Date (Old/New)
 const findDealsSortedByDateOld = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -111,11 +111,11 @@ const findDealsSortedByDateNew = async () => {
     return deals;
 };
 
-findDealsSortedByDateNew();
+
 
 /*
 
-// 🔎 5. Trouver toutes les ventes pour un set LEGO donné
+// Sales Lego Set Id
 const findSalesByLegoSetId = async (legoSetId) => {
     const db = await connectDB();
     const collection = db.collection('sales');
@@ -124,7 +124,7 @@ const findSalesByLegoSetId = async (legoSetId) => {
     return sales;
 };
 
-// 🔎 6. Trouver toutes les ventes de moins de 3 semaines
+// Sales -3 weeks
 const findRecentSales = async () => {
     const db = await connectDB();
     const threeWeeksAgo = new Date();
@@ -136,7 +136,7 @@ const findRecentSales = async () => {
     return sales;
 };
 
-// Export des fonctions
+// Export
 module.exports = {
     insertDeals,
     insertSales,
