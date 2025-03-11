@@ -103,7 +103,7 @@ function getUniqueLegoSetIds(deals) {
   return Array.from(legoIds);
 }
 
-const SCRAPPED_DEALS = getUniqueLegoSetIds(deals);
+const SCRAPPED_DEALS = getUniqueLegoSetIds(JSON.parse(fs.readFileSync('dealabsData.json')));
 // console.log(uniqueLegoIds);
 
 /*(async () => {
