@@ -239,6 +239,14 @@ const runPipeline = async () => {
 runPipeline();
 
 
+/**
+ * Export scraping functions to use in mongo.js
+ */
+module.exports = {
+    connectDB,
+    closeDB
+};
+
 
 
 
