@@ -8,7 +8,10 @@ const MONGODB_DB_NAME = 'lego';
 let client;
 let db;
 
-// Connexion à la base MongoDB
+
+/**
+ * Open connection to MongoDB database
+ */
 const connectDB = async () => {
     if (!client) {
         client = await MongoClient.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -18,50 +21,102 @@ const connectDB = async () => {
     return db;
 };
 
+
+/**
+ * Close connection to MongoDB database
+ */
+const closeDB = async () => {
+    if (client) {
+        await client.close();
+        console.log('✅ MongoDB connection closed');
+        client = null;
+        db = null;
+    }
+};
+
+
+/**
+ * Scrape data ?? => appeler la fonction sandbox qui scrape
+ */
+
+
+
+
+/**
+ * Load and insert data into MongoDB database
+ *//*
 const loadAndInsertData = async () => {
     try {
-        const db = await connectDB();
+        db = await connectDB();
 
         // Read & insert deals
         const dealsData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'dealabsData.json'), 'utf-8'));
         await insertDeals(dealsData);
-        console.log('✅ Deals insérés avec succès');
+        console.log('✅ Deals inserted successfully');
 
         // Read & insert sales
         const salesData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'vintedData.json'), 'utf-8'));
         await insertSales(salesData);
-        console.log('✅ Sales insérés avec succès');
+        console.log('✅ Sales inserted successfully');
 
     } catch (error) {
-        console.error('❌ Erreur lors de l’insertion des données :', error);
-    } finally {
+        console.error('❌ Error when inserting data :', error);
+    } /*finally {
         client.close(); // Close database connection
     }
 };
+*/
 
-// Insert deals from DEALABS
-const insertDeals = async (deals) => {
+
+
+/**
+ * Insert deals from DEALABS
+ * @param {String} deals - json scraped deals
+ */
+/*const insertDeals = async (deals) => {
     const db = await connectDB();
     const collection = db.collection('deals');
     const result = await collection.insertMany(deals);
     console.log(result);
+};*/
+const insertDeals = async (deals) => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+
+    // Delete old deals and insert new
+    await collection.deleteMany({});
+    const result = await collection.insertMany(deals);
+    console.log(result);
 };
 
-// Insert sales from VINTED
-const insertSales = async (sales) => {
+
+
+/**
+ * Insert deals from VINTED
+ * @param {String} deals - json scraped deals
+ */
+/*const insertSales = async (sales) => {
     const db = await connectDB();
     const collection = db.collection('sales');
     const result = await collection.insertMany(sales);
     console.log(result);
+};*/
+const insertSales = async (sales) => {
+    const db = await connectDB();
+    const collection = db.collection('sales');
+
+    // Delete old sales and insert new
+    await collection.deleteMany({});
+    const result = await collection.insertMany(sales);
+    console.log(result);
 };
 
-// loadAndInsertData();
 
 
 
-// -------------------------------------------------------------------------------------------------------
-
-// Best Discount
+/**
+ * Best discount
+ */
 const findBestDiscountDeals = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -70,7 +125,11 @@ const findBestDiscountDeals = async () => {
     return deals;
 };
 
-// Most Commented
+
+
+/**
+ * Most commented
+ */
 const findMostCommentedDeals = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -79,7 +138,11 @@ const findMostCommentedDeals = async () => {
     return deals;
 };
 
-// Sorted Price (Asc/Desc)
+
+
+/**
+ * Sorted price (Asc/Desc)
+ */
 const findDealsSortedByPriceAsc = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -95,7 +158,11 @@ const findDealsSortedByPriceDesc = async () => {
     return deals;
 };
 
-// Sorted Date (Old/New)
+
+
+/**
+ * Sorted date (Old/New)
+ */
 const findDealsSortedByDateOld = async () => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -110,6 +177,90 @@ const findDealsSortedByDateNew = async () => {
     console.log(deals);
     return deals;
 };
+
+
+
+
+
+
+
+
+
+
+const { scrapeDealabs, scrapeVinted } = require('./sandbox'); // Scraping
+
+
+const runPipeline = async () => {
+    try {
+        console.log("Launching pipeline...");
+
+        // 1) Connection to MongoDB
+        db = await connectDB();
+
+        // 2) Scraping Dealabs (deals + JSON)
+        console.log("Scraping Dealabs deals...");
+        const deals = await scrapeDealabs();
+        console.log("✅ Deals scraping");
+
+        // 3) Deals insertion into MongoDB
+        console.log("Insertion of deals into MongoDB...");
+        await insertDeals(deals);
+        console.log("✅ Deals deals inserted successfully");
+
+        // 4) Extraction unique deals IDs
+        // done in sandbox.js
+
+        // 5) Scraping Vinted for each ID
+        console.log("Scraping Vinted sales...");
+        const sales = await scrapeVinted();
+        console.log("✅ Sales scraping");
+
+        // 6) Sales insertion into MongoDB
+        console.log("Insertion of sales into MongoDB...");
+        for (const sale of sales) {
+            await insertSales(sale);
+        }
+        console.log("✅ Vinted sales inserted successfully");
+
+        // 7) Close connection to MongoDB
+        await closeDB();
+        console.log("Pipeline finished successfully !");
+
+    } catch (error) {
+
+        console.error("❌ Pipeline error :", error);
+        await closeDB();
+        process.exit(1);
+
+    }
+};
+
+// Lancer le pipeline automatiquement
+runPipeline();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -150,22 +301,3 @@ module.exports = {
 
 
 */
-
-
-
-
-/*
-const deals = [];
-
-const dealsCollection = db.collection('deals');
-const dealsResult = await collection.insertMany(deals);
-
-console.log(result);
-
-const sales = [];
-
-const legoSetId = '42156';
-const salesCollection = db.collection('sales');
-const salesResult = await salesCollection.find({ legoSetId }).toArray();
-
-console.log(sales);*/

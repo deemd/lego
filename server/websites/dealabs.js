@@ -3,6 +3,7 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 
 
+
 /**
  * Parse webpage data response
  * @param  {String} data - html response
@@ -52,9 +53,6 @@ const parse = data => {
 
 
 
-
-
-
 /**
  * Scrape a given URL page
  * @param {String} url - URL to parse
@@ -74,38 +72,15 @@ module.exports.scrape = async url => {
   
       const body = await response.text();
       const parsedData = parse(body);
+
       fs.writeFileSync('dealabsData.json', JSON.stringify(parsedData, null, 2));
+
       return parsedData;
+
     } catch (error) {
+
       console.error(`Error scraping ${url}:, ${error.message}`);
       return null;
+
     }
   };
-
-
-
-
-
-
-
-
-/**
- * Scrape a given url page
- * @param {String} url - url to parse
- * @returns 
- */
-/*
-module.exports.scrape = async url => {
-  const response = await fetch(url);
-
-  if (response.ok) {
-    const body = await response.text();
-
-    return parse(body);
-  }
-
-  console.error(response);
-
-  return null;
-};
-*/
