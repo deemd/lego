@@ -84,7 +84,7 @@ const insertSales = async (sales) => {
 
 
 
-/* ********************************************************* SEARCH ********************************************************** */
+/* ********************************************************* FILTER ********************************************************** */
 
 
 /**
@@ -175,6 +175,58 @@ const findBestTemperatureDeals = async () => {
 
 
 
+/* ******************************************************** DYNAMIC ********************************************************* */
+
+
+/**
+ * Calculate price indicators (average, p5, p25, p50)
+ */
+const calculatePriceIndicators = async (legoSetId) => {
+    const db = await connectDB();
+    const salesCollection = db.collection('sales');
+
+    const sales = await salesCollection.find({ legoSetId }).toArray();
+
+    if (!sales.length) return { average: 0, p5: 0, p25: 0, p50: 0 };
+
+    const prices = sales.map((sale) => parseFloat(sale.price));
+
+    const sortedPrices = [...prices].sort((a, b) => a - b); // Sort price
+
+    const average = (sortedPrices.reduce((sum, price) => sum + price, 0) / prices.length).toFixed(2);
+    const p5 = sortedPrices[Math.floor(0.05 * (prices.length - 1))].toFixed(2);
+    const p25 = sortedPrices[Math.floor(0.25 * (prices.length - 1))].toFixed(2);
+    const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
+
+    return { average, p5, p25, p50 };
+};
+
+
+/**
+ * Calculate sales lifetime
+ */
+const calculateLifetimeValue = async (legoSetId) => {
+    const db = await connectDB();
+    const salesCollection = db.collection('sales');
+
+    const sales = await salesCollection.find({ legoSetId }).toArray();
+
+    if (sales.length === 0) {
+        return "No sales"; // No sales data
+    }
+
+    const dates = sales.map((sale) => new Date(sale.published));
+    const earliestDate = new Date(Math.min(...dates));
+    const latestDate = new Date(Math.max(...dates));
+
+    const lifetimeInMs = latestDate - earliestDate; // Différence en millisecondes
+    const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24)); // Conversion en jours
+
+    return `${lifetimeInDays} days`;
+};
+
+
+
 
 /* ******************************************************** PIPELINE ********************************************************* */
 
@@ -252,7 +304,9 @@ module.exports = {
     findDealsSortedByPriceDesc, 
     findDealsSortedByDateOld, 
     findDealsSortedByDateNew,
-    findDealById
+    findDealById,
+    calculatePriceIndicators,
+    calculateLifetimeValue
 };
 
 

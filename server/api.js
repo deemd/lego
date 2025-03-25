@@ -144,15 +144,73 @@ app.get('/deals/sort/date-new', async (req, res) => {
 
 
 
-app.listen(PORT, async () => {
-  await connectDB(); // On s'assure que MongoDB est connecté au lancement du serveur
-  console.log(`📡 Running on port ${PORT}`);
+
+
+/* ******************************************************** DYNAMIC ********************************************************* */
+
+
+/**
+ * Path to retrieve price indicators on sales
+ */
+app.get('/lego/:legoSetId/price-indicators', async (req, res) => {
+  try {
+      const { legoSetId } = req.params; // Récupérer l'ID du set LEGO depuis l'URL
+
+      // Appeler la fonction pour calculer les indicateurs de prix
+      const priceIndicators = await calculatePriceIndicators(legoSetId);
+
+      res.json(priceIndicators);
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
+});
+
+
+/**
+ * Path to retrieve sales lifetime
+ */
+app.get('/lego/:legoSetId/lifetime-value', async (req, res) => {
+  try {
+      const { legoSetId } = req.params; // Récupérer l'ID du set LEGO depuis l'URL
+
+      // Appeler la fonction pour calculer la durée de vie des ventes
+      const lifetimeValue = await calculateLifetimeValue(legoSetId);
+
+      res.json({ lifetimeValue });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erreur interne du serveur' });
+  }
 });
 
 
 
-// app.listen(PORT);
-// console.log(`📡 Running on port ${PORT}`);
+
+
+
+
+
+
+
+app.listen(PORT);
+console.log(`📡 Running on port ${PORT}`);
+
+
+
+
+
+
+
+
+// app.listen(PORT, async () => {
+//   await connectDB(); // On s'assure que MongoDB est connecté au lancement du serveur
+//   console.log(`📡 Running on port ${PORT}`);
+// });
+
+
+
+
 
 
 
