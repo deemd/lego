@@ -4,6 +4,18 @@ const fs = require('fs');
 
 
 
+
+/**
+ * Extracts a lego set id from a given URL link
+ * @param {string} url - The website URL
+ */
+function extractLegoSetId(url) {
+  const regex = /\b\d{4,6}\b/; /*/lego-(\d{5})/i;*/
+  const match = url.match(regex);
+  return match ? match[0] : null; // match[1]
+}
+
+
 /**
  * Parse webpage data response
  * @param  {String} data - html response
@@ -33,7 +45,7 @@ const parse = data => {
       const comments = +thread.commentCount;
       const published = thread.publishedAt;
       const title = thread.title;
-      const id = thread.threadId;
+      const id = extractLegoSetId(link); // thread.threadId => pas le bon
       
       return {
         link,

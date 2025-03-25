@@ -9,6 +9,11 @@ let client;
 let db;
 
 
+
+
+/* ********************************************************* MONGODB ********************************************************** */
+
+
 /**
  * Open connection to MongoDB database
  */
@@ -36,40 +41,6 @@ const closeDB = async () => {
 
 
 /**
- * Scrape data ?? => appeler la fonction sandbox qui scrape
- */
-
-
-
-
-/**
- * Load and insert data into MongoDB database
- *//*
-const loadAndInsertData = async () => {
-    try {
-        db = await connectDB();
-
-        // Read & insert deals
-        const dealsData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'dealabsData.json'), 'utf-8'));
-        await insertDeals(dealsData);
-        console.log('✅ Deals inserted successfully');
-
-        // Read & insert sales
-        const salesData = JSON.parse(fs.readFileSync(path.join("C:\\Users\\hrobi\\Documents\\GitHub\\lego\\server", 'vintedData.json'), 'utf-8'));
-        await insertSales(salesData);
-        console.log('✅ Sales inserted successfully');
-
-    } catch (error) {
-        console.error('❌ Error when inserting data :', error);
-    } /*finally {
-        client.close(); // Close database connection
-    }
-};
-*/
-
-
-
-/**
  * Insert deals from DEALABS
  * @param {String} deals - json scraped deals
  */
@@ -88,7 +59,6 @@ const insertDeals = async (deals) => {
     const result = await collection.insertMany(deals);
     console.log(result);
 };
-
 
 
 /**
@@ -114,6 +84,9 @@ const insertSales = async (sales) => {
 
 
 
+/* ********************************************************* SEARCH ********************************************************** */
+
+
 /**
  * Best discount
  */
@@ -126,7 +99,6 @@ const findBestDiscountDeals = async () => {
 };
 
 
-
 /**
  * Most commented
  */
@@ -137,7 +109,6 @@ const findMostCommentedDeals = async () => {
     console.log(deals);
     return deals;
 };
-
 
 
 /**
@@ -159,7 +130,6 @@ const findDealsSortedByPriceDesc = async () => {
 };
 
 
-
 /**
  * Sorted date (Old/New)
  */
@@ -179,17 +149,42 @@ const findDealsSortedByDateNew = async () => {
 };
 
 
+/**
+ * Find a deal by ID
+ */
+const findDealById = async (id) => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deal = await collection.findOne({ _id: id });
+    console.log(deal);
+    return deal;
+};
+
+
+/**
+ * Best temperature (nouveau filtre)
+ */
+const findBestTemperatureDeals = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ temperature: -1 }).limit(10).toArray();
+    console.log(deals);
+    return deals;
+};
 
 
 
 
 
-
+/* ******************************************************** PIPELINE ********************************************************* */
 
 
 const { scrapeDealabs, scrapeVinted } = require('./sandbox'); // Scraping
 
 
+/**
+ * Scraping + MongoDB Pipeline
+ */
 const runPipeline = async () => {
     try {
         console.log("Launching pipeline...");
@@ -239,12 +234,25 @@ const runPipeline = async () => {
 runPipeline();
 
 
+
+
+
+/* ********************************************************** EXPORT ********************************************************* */
+
 /**
  * Export scraping functions to use in mongo.js
  */
 module.exports = {
     connectDB,
-    closeDB
+    closeDB, 
+    findBestDiscountDeals, 
+    findMostCommentedDeals, 
+    findBestTemperatureDeals,
+    findDealsSortedByPriceAsc, 
+    findDealsSortedByPriceDesc, 
+    findDealsSortedByDateOld, 
+    findDealsSortedByDateNew,
+    findDealById
 };
 
 

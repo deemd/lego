@@ -6,7 +6,6 @@ const scrapers = {
   'vinted': require('./websites/vinted')
 };
 
-let vintedWeb;
 
 
 
@@ -18,7 +17,7 @@ function extractLegoSetId(url) {
   const regex = /\b\d{4,6}\b/; /*/lego-(\d{5})/i;*/
   const match = url.match(regex);
   return match ? match[0] : null; // match[1]
-}
+} // no need anymore, just use the id attribute of deals
 
 
 
@@ -29,7 +28,7 @@ function getUniqueLegoSetIds(deals) {
   const legoIds = new Set(); // set = no duplicates
 
   deals.forEach(deal => {
-      const legoId = extractLegoSetId(deal.link);
+      const legoId = deal.id;// extractLegoSetId(deal.link);
       if (legoId) {
           legoIds.add(legoId);
       }
