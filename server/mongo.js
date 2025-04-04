@@ -56,7 +56,12 @@ const insertDeals = async (deals) => {
 
     // Delete old deals and insert new
     await collection.deleteMany({});
-    const result = await collection.insertMany(deals);
+
+    // Filtrer les deals avec un id valide
+    const validDeals = deals.filter(deal => deal.id !== null && deal.id !== undefined);
+
+    // Only insert valid deals
+    const result = await collection.insertMany(validDeals);
     console.log(result);
 };
 
@@ -76,7 +81,7 @@ const insertSales = async (sales) => {
     const collection = db.collection('sales');
 
     // Delete old sales and insert new
-    await collection.deleteMany({});
+    // await collection.deleteMany({});
     const result = await collection.insertMany(sales);
     console.log(result);
 };
@@ -175,6 +180,58 @@ const findBestTemperatureDeals = async () => {
 
 
 
+/* *************************************************** FILTER COMBINE ********************************************************** */
+
+const findDealsByFilters = async (filters = []) => { // , limit = 12
+    const db = await connectDB();
+    const collection = db.collection('deals');
+
+    let query = {}; // (À compléter si besoin pour filtrer les données)
+    let sort = {};  // (Gestion du tri selon les filtres)
+
+    // Appliquer les tris en fonction des filtres demandés
+    if (filters.includes('best-discount')) {
+        sort.discount = -1;
+    }
+    if (filters.includes('most-commented')) {
+        sort.comments = -1;
+    }
+    if (filters.includes('best-temperature')) {
+        sort.temperature = -1;
+    }
+    if (filters.includes('price-asc')) {
+        sort.price = 1;
+    }
+    if (filters.includes('price-desc')) {
+        sort.price = -1;
+    }
+    if (filters.includes('date-old')) {
+        sort.published = 1;
+    }
+    if (filters.includes('date-new')) {
+        sort.published = -1;
+    }
+
+    // Exécuter la requête avec les filtres et la limite
+    const results = await collection.find(query).sort(sort).toArray(); // .limit(parseInt(limit))
+    return results;
+};
+
+const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
+    const db = await connectDB();
+
+    // Filtrer par legoSetId et trier par date décroissante
+    const results = await db.collection('sales')
+        .find({ id: legoSetId }) // Filtre par ID
+        .sort({ published: -1 })       // Tri par date décroissante (du plus récent au plus ancien)
+        //.limit(parseInt(limit))        // Appliquer la limite
+        .toArray();
+
+    return results;
+};
+
+
+
 /* ******************************************************** DYNAMIC ********************************************************* */
 
 
@@ -185,7 +242,7 @@ const calculatePriceIndicators = async (legoSetId) => {
     const db = await connectDB();
     const salesCollection = db.collection('sales');
 
-    const sales = await salesCollection.find({ legoSetId }).toArray();
+    const sales = await salesCollection.find({ id:legoSetId }).toArray();
 
     if (!sales.length) return { average: 0, p5: 0, p25: 0, p50: 0 };
 
@@ -205,11 +262,14 @@ const calculatePriceIndicators = async (legoSetId) => {
 /**
  * Calculate sales lifetime
  */
-const calculateLifetimeValue = async (legoSetId) => {
+/*const calculateLifetimeValue = async (legoSetId) => {
     const db = await connectDB();
-    const salesCollection = db.collection('sales');
+    //const salesCollection = db.collection('sales');
 
-    const sales = await salesCollection.find({ legoSetId }).toArray();
+    //const sales = await salesCollection.find({ id:legoSetId }).toArray();
+    const sales = await db.collection('sales')
+        .find({ id: legoSetId }) // Filtre par ID
+        .toArray();
 
     if (sales.length === 0) {
         return "No sales"; // No sales data
@@ -222,9 +282,36 @@ const calculateLifetimeValue = async (legoSetId) => {
     const lifetimeInMs = latestDate - earliestDate; // Différence en millisecondes
     const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24)); // Conversion en jours
 
-    return `${lifetimeInDays} days`;
-};
+    return lifetimeInDays;
+};*/
+  
 
+const calculateLifetimeValue = async (legoSetId) => {
+    const db = await connectDB();
+    const sales = await db.collection('sales').find({ id: legoSetId }).toArray();
+  
+    if (sales.length === 0) {
+      return "No sales";
+    }
+  
+    // Parser les dates en filtrant celles qui sont invalides
+    const dates = sales
+      .map((sale) => new Date(sale.published))
+      .filter((d) => d !== null);
+  
+    if (dates.length === 0) {
+      return "Invalid date format in sales data";
+    }
+  
+    const earliestDate = new Date(Math.min(...dates));
+    const latestDate = new Date(Math.max(...dates));
+  
+    const lifetimeInMs = latestDate - earliestDate;
+    const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24));
+  
+    return `${lifetimeInDays} days`;
+  };
+  
 
 
 
@@ -265,6 +352,10 @@ const runPipeline = async () => {
         // 6) Sales insertion into MongoDB
         console.log("Insertion of sales into MongoDB...");
         for (const sale of sales) {
+            if (!sale || Object.keys(sale).length === 0) {
+                console.log("⚠️ Vente vide détectée, saut de l'insertion.");
+                continue; // Passe à l'itération suivante
+            }
             await insertSales(sale);
         }
         console.log("✅ Vinted sales inserted successfully");
@@ -283,7 +374,7 @@ const runPipeline = async () => {
 };
 
 // Lancer le pipeline automatiquement
-runPipeline();
+// runPipeline();
 
 
 
@@ -306,7 +397,9 @@ module.exports = {
     findDealsSortedByDateNew,
     findDealById,
     calculatePriceIndicators,
-    calculateLifetimeValue
+    calculateLifetimeValue, 
+    findDealsByFilters,
+    findSalesByLegoSetId
 };
 
 
