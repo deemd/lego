@@ -6,21 +6,6 @@ const fs = require('fs');
 
 
 /**
- * Convert timestamp into date format
- */
-/*const formatTimestamp = (timestamp) => {
-  const date = new Date(timestamp * 1000); // Convertir en millisecondes
-  return date.toLocaleString('fr-FR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-};*/
-
-/**
  * Convert timestamp into ISO 8601 format
  * Exemple: "2025-04-04T15:12:00.000Z"
  */

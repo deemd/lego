@@ -3,14 +3,7 @@ const express = require('express');
 const helmet = require('helmet');
 const {
   connectDB,
-  findBestDiscountDeals, 
-  findMostCommentedDeals, 
-  findBestTemperatureDeals,
-  findDealsSortedByPriceAsc, 
-  findDealsSortedByPriceDesc, 
-  findDealsSortedByDateOld, 
-  findDealsSortedByDateNew,
-  findDealById,
+  findDealBySpecId,
   findDealsByFilters,
   findSalesByLegoSetId,
   calculateLifetimeValue,
@@ -29,16 +22,21 @@ app.use(helmet());
 app.options('*', cors());
 
 
-/* ******************************************************** TEST ? ********************************************************* */
 
 
-// Middleware pour activer CORS sur toutes les routes
+/**
+ * Middleware to activate CORS for every paths
+ * Enables CORS for all routes, allowing any origin to access the API with specific methods and headers.
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
+ * @param {Function} next - Next middleware function
+ */
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Autorise toutes les origines (tu peux aussi spécifier une origine spécifique)
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Méthodes autorisées
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Headers autorisés
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS'); // Allowed methods
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Allowed headers
   if (req.method === 'OPTIONS') {
-    res.status(204).end(); // Répondre directement au preflight avec un status 204
+    res.status(204).end(); // Answer directly to preflight with 204 status
     return;
   }
   next();
@@ -46,28 +44,66 @@ app.use((req, res, next) => {
 
 
 
-/* ******************************************************** DEFAULT ********************************************************* */
-
 
 /**
- * Default response
+ * GET / - Default response
+ * Simple endpoint that returns an acknowledgment response to check if the server is running.
+ * @param {Object} req - Request object
+ * @param {Object} res - Response object
  */
-app.get('/', (request, response) => {
-  response.send({ 'ack': true });
+app.get('/', (req, res) => {
+  res.send({ 'ack': true });
 });
 
 
 
 
-/* ******************************************************** DEALS ********************************************************* */
+/**
+ * GET /deals/search - Search for specific deals or return all
+ * Searches deals based on provided filters like price, filter criteria, and LEGO set ID.
+ * @param {Object} req - Request object with query parameters
+ * @param {Object} res - Response object with search results
+ */
+app.get('/deals/search', async (req, res) => {
+  try {
+    // Debug
+    console.log('--- Begin /deals/search request ---');
 
+    const { price, filterBy, limit, legoSetId } = req.query;
+
+    // Debug
+    console.log(`Params received: price=${price}, filterBy=${filterBy}, limit=${limit}, legoSetId=${legoSetId}`);
+
+    const deals = await findDealsByFilters({ price, filterBy, limit, legoSetId });
+
+    // Debug
+    console.log(`Number of deals found: ${deals.length}`);
+    // console.log(deals);
+
+    if (!deals || deals.length === 0) {
+      return res.status(404).json({ error: 'No deal found' });
+    }
+
+    res.json({
+      limit: parseInt(limit) || 35,
+      total: deals.length,
+      results: deals
+    });
+  } catch (error) {
+    console.error("❌ Error API /deals/search :", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 /**
  * GET /deals/:id - Retrieve a deal by ID
+ * Fetches a specific deal using its unique MongoDB ID.
+ * @param {Object} req - Request object with deal ID
+ * @param {Object} res - Response object with the deal details
  */
 app.get('/deals/:id', async (req, res) => {
   try {
-    const deal = await findDealById(req.params.id);
+    const deal = await findDealBySpecId(req.params.id);
 
     if (!deal) return res.status(404).json({ error: "Deal not found" });
     
@@ -79,157 +115,18 @@ app.get('/deals/:id', async (req, res) => {
 });
 
 
-/**
- * GET /deals/:legoSetId - Retrieve deals by Lego Set ID
- */
-app.get('/deals/:legoSetId', async (req, res) => {
-  try {
-    const deal = await findDealById(req.params.id);
-
-    if (!deal) return res.status(404).json({ error: "Deal not found" });
-    
-    res.json(deal);
-  } catch (error) {
-    console.error(`Error fetching deal with ID ${req.params.id}:`, error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 
 /**
- * Path to retrieve best discounts
- */
-app.get('/deals/best-discount', async (req, res) => {
-  try {
-    const deals = await findBestDiscountDeals();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-/**
- * Path to retrieve most commented
- */
-app.get('/deals/most-commented', async (req, res) => {
-  try {
-    const deals = await findMostCommentedDeals();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-/**
- * Path to retrieve deals sorted by price (ASC)
- */
-app.get('/deals/sort/price-asc', async (req, res) => {
-  try {
-    const deals = await findDealsSortedByPriceAsc();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-/**
- * Path to retrieve deals sorted by price (DESC)
- */
-app.get('/deals/sort/price-desc', async (req, res) => {
-  try {
-    const deals = await findDealsSortedByPriceDesc();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-/**
- * Path to retrieve deals sorted by date (OLD)
- */
-app.get('/deals/sort/date-old', async (req, res) => {
-  try {
-    const deals = await findDealsSortedByDateOld();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-/**
- * Path to retrieve deals sorted by date (NEW)
- */
-app.get('/deals/sort/date-new', async (req, res) => {
-  try {
-    const deals = await findDealsSortedByDateNew();
-    res.json(deals);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-
-
-/* ***************************************************** DEALS COMBINE ****************************************************** */
-
-
-app.get('/deals/search', async (req, res) => {
-  try {
-    const { filterBy } = req.query; // , limit = 12 
-
-    // Si aucun filtre n'est spécifié, récupérer tous les deals par défaut
-    if (!filterBy) {
-      const defaultDeals = await findDealsByFilters([]); // , limit
-      return res.json(defaultDeals);
-    }
-
-    // Découper les filtres s'il y en a plusieurs (ex: best-discount,most-commented)
-    const filters = filterBy.split(',');
-
-    // Vérifier si les filtres sont valides
-    const validFilters = ['best-discount', 'most-commented', 'best-temperature', 'price-asc', 'price-desc', 'date-new', 'date-old'];
-    const invalidFilters = filters.filter(f => !validFilters.includes(f));
-    
-    if (invalidFilters.length > 0) {
-      return res.status(400).json({ error: `Filtres invalides : ${invalidFilters.join(', ')}` });
-    }
-
-    // Appeler la fonction MongoDB avec les filtres
-    const deals = await findDealsByFilters(filters); // , limit
-    res.json({ total: deals.length, results: deals }); // limit, 
-
-  } catch (error) {
-    console.error("❌ Erreur API /deals/search :", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-
-
-
-/* ******************************************************** SALES ********************************************************* */
-
-
-/**
- * Path to retrieve price indicators on sales
+ * GET /sales/:id/price-indicators - Retrieve price indicators on sales
+ * Returns price indicators for a specific LEGO set sale.
+ * @param {Object} req - Request object with LEGO set ID
+ * @param {Object} res - Response object with price indicators
  */
 app.get('/sales/:id/price-indicators', async (req, res) => {
   try {
-      const { id } = req.params; // Récupérer l'ID du set LEGO depuis l'URL
+      const { id } = req.params; // Retrieve LEGO SET ID from URL
 
-      // Appeler la fonction pour calculer les indicateurs de prix
       const priceIndicators = await calculatePriceIndicators(id);
 
       res.json(priceIndicators);
@@ -239,15 +136,16 @@ app.get('/sales/:id/price-indicators', async (req, res) => {
   }
 });
 
-
 /**
- * Path to retrieve sales lifetime
+ * GET /sales/:id/lifetime-value - Retrieve sales lifetime
+ * Returns the lifetime value (history) of a specific LEGO set sale.
+ * @param {Object} req - Request object with LEGO set ID
+ * @param {Object} res - Response object with lifetime value
  */
 app.get('/sales/:id/lifetime-value', async (req, res) => {
   try {
-      const { id } = req.params; // Récupérer l'ID du set LEGO depuis l'URL
+      const { id } = req.params; // Retrieve LEGO SET ID from URL
 
-      // Appeler la fonction pour calculer la durée de vie des ventes
       const lifetimeValue = await calculateLifetimeValue(id);
 
       res.json({ lifetimeValue });
@@ -257,12 +155,11 @@ app.get('/sales/:id/lifetime-value', async (req, res) => {
   }
 });
 
-
-/* ***************************************************** SALES COMBINE ****************************************************** */
-
-
-/*
+/**
  * GET /sales/search - Search for specific sales given a Lego Set ID
+ * Searches sales for a specific LEGO set based on its ID.
+ * @param {Object} req - Request object with LEGO set ID
+ * @param {Object} res - Response object with sales data
  */
 app.get('/sales/search', async (req, res) => {
   try {
@@ -300,15 +197,9 @@ app.get('/sales/search', async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-// Lancer le serveur et connecter à MongoDB
+/**
+ * Launch server and connect to MongoDB
+ */
 async function startServer() {
   try {
     await connectDB(); // Connexion à MongoDB
@@ -323,26 +214,4 @@ async function startServer() {
   }
 }
 
-startServer(); // Lancer le serveur
-
-
-
-
-
-
-
-
-/*
-
-  ** DYNAMIC **
-  PAST SALES = count for a legoId (on sales) => FRONT JS
-  AVG, Q5, Q25, MEDIAN = calculatePriceIndicators (on sales) => BACK API
-  AVG LIFETIME = calculateLifetimeValue (on sales) => BACK API
-
-  ** FILTER **
-  DISCOUNT = best-discount (on deals)                           ** /deals/search/discount
-  POPULAR = most-commented + most-favorite (on deals)           ** /deals/search/popular
-  HOT = best-temperature (on deals)                             ** /deals/search/hot
-  ( FAVORITE by front ) 
-
-*/
+startServer(); // Launch server

@@ -1,4 +1,5 @@
-const { MongoClient } = require('mongodb');
+const { scrapeDealabs, scrapeVinted } = require('./sandbox'); // Scraping
+const { MongoClient, ObjectId } = require('mongodb');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,11 +12,10 @@ let db;
 
 
 
-/* ********************************************************* MONGODB ********************************************************** */
-
-
 /**
  * Open connection to MongoDB database
+ * Establishes a connection to MongoDB using the provided URI and database name.
+ * @returns {Object} - The database connection object.
  */
 const connectDB = async () => {
     if (!client) {
@@ -26,9 +26,9 @@ const connectDB = async () => {
     return db;
 };
 
-
 /**
  * Close connection to MongoDB database
+ * Closes the MongoDB connection and clears the client and database references.
  */
 const closeDB = async () => {
     if (client) {
@@ -39,17 +39,11 @@ const closeDB = async () => {
     }
 };
 
-
 /**
  * Insert deals from DEALABS
- * @param {String} deals - json scraped deals
+ * Inserts a batch of scraped DEALABS deals into the 'deals' collection after filtering out invalid ones.
+ * @param {String} deals - JSON array of scraped deals.
  */
-/*const insertDeals = async (deals) => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const result = await collection.insertMany(deals);
-    console.log(result);
-};*/
 const insertDeals = async (deals) => {
     const db = await connectDB();
     const collection = db.collection('deals');
@@ -57,25 +51,19 @@ const insertDeals = async (deals) => {
     // Delete old deals and insert new
     await collection.deleteMany({});
 
-    // Filtrer les deals avec un id valide
-    const validDeals = deals.filter(deal => deal.id !== null && deal.id !== undefined);
-
     // Only insert valid deals
+    const validDeals = deals.filter(deal => deal.id !== null && deal.id !== undefined);
     const result = await collection.insertMany(validDeals);
+
+    // Debug
     console.log(result);
 };
 
-
 /**
  * Insert deals from VINTED
- * @param {String} deals - json scraped deals
+ * Inserts a batch of scraped VINTED sales data into the 'sales' collection.
+ * @param {String} sales - JSON array of scraped sales.
  */
-/*const insertSales = async (sales) => {
-    const db = await connectDB();
-    const collection = db.collection('sales');
-    const result = await collection.insertMany(sales);
-    console.log(result);
-};*/
 const insertSales = async (sales) => {
     const db = await connectDB();
     const collection = db.collection('sales');
@@ -83,160 +71,101 @@ const insertSales = async (sales) => {
     // Delete old sales and insert new
     // await collection.deleteMany({});
     const result = await collection.insertMany(sales);
+
+    // Debug
     console.log(result);
 };
 
 
 
 
-/* ********************************************************* FILTER ********************************************************** */
-
-
 /**
- * Best discount
+ * Find deals based on filters
+ * Searches for deals with optional filters like price range, LEGO set ID, and sort criteria.
+ * @param {Object} params - The query parameters for filtering and sorting.
+ * @param {String} params.price - Price filter (e.g., '>', '<', or exact price).
+ * @param {String} params.filterBy - Sorting filter (e.g., 'best-discount', 'price-asc').
+ * @param {Number} params.limit - The number of results to return (default 35).
+ * @param {String} params.legoSetId - LEGO set ID to filter deals by.
+ * @returns {Array} - Array of deals matching the filters.
  */
-const findBestDiscountDeals = async () => {
+const findDealsByFilters = async ({ price, filterBy, limit = 35, legoSetId }) => {
     const db = await connectDB();
     const collection = db.collection('deals');
-    const deals = await collection.find().sort({ discount: -1 }).limit(10).toArray();
-    console.log(deals);
-    return deals;
-};
-
-
-/**
- * Most commented
- */
-const findMostCommentedDeals = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ comments: -1 }).limit(10).toArray();
-    console.log(deals);
-    return deals;
-};
-
-
-/**
- * Sorted price (Asc/Desc)
- */
-const findDealsSortedByPriceAsc = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ price: 1 }).toArray();
-    console.log(deals);
-    return deals;
-};
-const findDealsSortedByPriceDesc = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ price: -1 }).toArray();
-    console.log(deals);
-    return deals;
-};
-
-
-/**
- * Sorted date (Old/New)
- */
-const findDealsSortedByDateOld = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ published: 1 }).toArray();
-    console.log(deals);
-    return deals;
-};
-const findDealsSortedByDateNew = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ published: -1 }).toArray();
-    console.log(deals);
-    return deals;
-};
-
-
-/**
- * Find a deal by ID
- */
-const findDealById = async (id) => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deal = await collection.findOne({ _id: id });
-    console.log(deal);
-    return deal;
-};
-
-
-/**
- * Best temperature (nouveau filtre)
- */
-const findBestTemperatureDeals = async () => {
-    const db = await connectDB();
-    const collection = db.collection('deals');
-    const deals = await collection.find().sort({ temperature: -1 }).limit(10).toArray();
-    console.log(deals);
-    return deals;
-};
-
-
-
-
-/* *************************************************** FILTER COMBINE ********************************************************** */
-
-const findDealsByFilters = async (filters = []) => { // , limit = 12
-    const db = await connectDB();
-    const collection = db.collection('deals');
-
-    let query = {}; // (À compléter si besoin pour filtrer les données)
-    let sort = {};  // (Gestion du tri selon les filtres)
-
-    // Appliquer les tris en fonction des filtres demandés
-    if (filters.includes('best-discount')) {
+  
+    const query = {};
+    const sort = {};
+  
+    // --- Filter by price
+    if (price) {
+      if (price.startsWith('>')) {
+        query.price = { $gt: parseFloat(price.slice(1)) };
+      } else if (price.startsWith('<')) {
+        query.price = { $lt: parseFloat(price.slice(1)) };
+      } else {
+        query.price = parseFloat(price);
+      }
+    }
+  
+    // --- Filter by LEGO set ID
+    if (legoSetId) {
+      query.id = legoSetId;
+    }
+  
+    // --- Sort by filterBy (multi-filters allowed, split by ',')
+    if (filterBy) {
+        const filters = filterBy.split(',');
+    
+        if (filters.includes('best-discount')) {
         sort.discount = -1;
-    }
-    if (filters.includes('most-commented')) {
+        }
+        if (filters.includes('most-commented')) {
         sort.comments = -1;
-    }
-    if (filters.includes('best-temperature')) {
+        }
+        if (filters.includes('best-temperature')) {
         sort.temperature = -1;
-    }
-    if (filters.includes('price-asc')) {
+        }
+        if (filters.includes('price-asc')) {
         sort.price = 1;
-    }
-    if (filters.includes('price-desc')) {
+        }
+        if (filters.includes('price-desc')) {
         sort.price = -1;
-    }
-    if (filters.includes('date-old')) {
+        }
+        if (filters.includes('date-new')) {
+        sort.published = -1;
+        }
+        if (filters.includes('date-old')) {
         sort.published = 1;
+        }
     }
-    if (filters.includes('date-new')) {
+  
+    // Default sort
+    if (Object.keys(sort).length === 0) {
         sort.published = -1;
     }
-
-    // Exécuter la requête avec les filtres et la limite
-    const results = await collection.find(query).sort(sort).toArray(); // .limit(parseInt(limit))
+  
+    // Debug (request params)
+    console.log('Query:', JSON.stringify(query, null, 2));
+    console.log('Sort:', JSON.stringify(sort, null, 2));
+  
+    // --- MongoDB request execution
+    const results = await collection
+      .find(query)
+      .sort(sort)
+      .limit(parseInt(limit))
+      .toArray();
+  
     return results;
-};
-
-const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
-    const db = await connectDB();
-
-    // Filtrer par legoSetId et trier par date décroissante
-    const results = await db.collection('sales')
-        .find({ id: legoSetId }) // Filtre par ID
-        .sort({ published: -1 })       // Tri par date décroissante (du plus récent au plus ancien)
-        //.limit(parseInt(limit))        // Appliquer la limite
-        .toArray();
-
-    return results;
-};
+  };
+  
 
 
 
-/* ******************************************************** DYNAMIC ********************************************************* */
-
-
-/**
+  /**
  * Calculate price indicators (average, p5, p25, p50)
+ * Calculates various price statistics (average, p5, p25, p50) for sales of a given LEGO set.
+ * @param {String} legoSetId - LEGO set ID to calculate price indicators for.
+ * @returns {Object} - Price indicators (average, p5, p25, p50).
  */
 const calculatePriceIndicators = async (legoSetId) => {
     const db = await connectDB();
@@ -258,34 +187,12 @@ const calculatePriceIndicators = async (legoSetId) => {
     return { average, p5, p25, p50 };
 };
 
-
 /**
  * Calculate sales lifetime
+ * Calculates the duration between the earliest and latest sale for a given LEGO set.
+ * @param {String} legoSetId - LEGO set ID to calculate the sales lifetime for.
+ * @returns {String} - The lifetime in days or an error message if no sales found.
  */
-/*const calculateLifetimeValue = async (legoSetId) => {
-    const db = await connectDB();
-    //const salesCollection = db.collection('sales');
-
-    //const sales = await salesCollection.find({ id:legoSetId }).toArray();
-    const sales = await db.collection('sales')
-        .find({ id: legoSetId }) // Filtre par ID
-        .toArray();
-
-    if (sales.length === 0) {
-        return "No sales"; // No sales data
-    }
-
-    const dates = sales.map((sale) => new Date(sale.published));
-    const earliestDate = new Date(Math.min(...dates));
-    const latestDate = new Date(Math.max(...dates));
-
-    const lifetimeInMs = latestDate - earliestDate; // Différence en millisecondes
-    const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24)); // Conversion en jours
-
-    return lifetimeInDays;
-};*/
-  
-
 const calculateLifetimeValue = async (legoSetId) => {
     const db = await connectDB();
     const sales = await db.collection('sales').find({ id: legoSetId }).toArray();
@@ -294,7 +201,6 @@ const calculateLifetimeValue = async (legoSetId) => {
       return "No sales";
     }
   
-    // Parser les dates en filtrant celles qui sont invalides
     const dates = sales
       .map((sale) => new Date(sale.published))
       .filter((d) => d !== null);
@@ -310,19 +216,33 @@ const calculateLifetimeValue = async (legoSetId) => {
     const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24));
   
     return `${lifetimeInDays} days`;
-  };
-  
+};
+
+/**
+ * Find sales by LEGO set ID
+ * Retrieves sales for a given LEGO set ID, sorted by the most recent sale.
+ * @param {String} legoSetId - The LEGO set ID to search sales for.
+ * @returns {Array} - Array of sales matching the LEGO set ID.
+ */
+const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
+    const db = await connectDB();
+
+    const results = await db.collection('sales')
+        .find({ id: legoSetId })
+        .sort({ published: -1 })
+        //.limit(parseInt(limit))
+        .toArray();
+
+    return results;
+};
 
 
-
-/* ******************************************************** PIPELINE ********************************************************* */
-
-
-const { scrapeDealabs, scrapeVinted } = require('./sandbox'); // Scraping
 
 
 /**
  * Scraping + MongoDB Pipeline
+ * Executes a full scraping pipeline: scraping DEALABS deals, inserting them into MongoDB, scraping VINTED sales, and inserting them.
+ * @returns {void}
  */
 const runPipeline = async () => {
     try {
@@ -373,14 +293,110 @@ const runPipeline = async () => {
     }
 };
 
-// Lancer le pipeline automatiquement
-// runPipeline();
+// runPipeline(); // Lauch pipeline (auto)
 
 
 
 
+/**
+ * Best discount
+ */
+/*const findBestDiscountDeals = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ discount: -1 }).limit(10).toArray();
+    console.log(deals);
+    return deals;
+};*/
 
-/* ********************************************************** EXPORT ********************************************************* */
+
+/**
+ * Most commented
+ */
+/*const findMostCommentedDeals = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ comments: -1 }).limit(10).toArray();
+    console.log(deals);
+    return deals;
+};*/
+
+
+/**
+ * Sorted price (Asc/Desc)
+ */
+/*const findDealsSortedByPriceAsc = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ price: 1 }).toArray();
+    console.log(deals);
+    return deals;
+};*/
+/*const findDealsSortedByPriceDesc = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ price: -1 }).toArray();
+    console.log(deals);
+    return deals;
+};*/
+
+
+/**
+ * Sorted date (Old/New)
+ */
+/*const findDealsSortedByDateOld = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ published: 1 }).toArray();
+    console.log(deals);
+    return deals;
+};*/
+/*const findDealsSortedByDateNew = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ published: -1 }).toArray();
+    console.log(deals);
+    return deals;
+};*/
+
+
+/**
+ * Find a deal by SPEC-ID
+ */
+/*const findDealBySpecId = async (id) => {
+    const db = await connectDB();
+    const deal = await db.collection('deals')
+    .findOne({ _id: new ObjectId(id) }); // .find({ _id: id });
+    // console.log(deal);
+    return deal;
+};*/
+
+/**
+ * Find a deal by Lego Set ID
+ */
+/*const findDealsById = async (id) => {
+    const db = await connectDB();
+    const deals = await db.collection('deals')
+      .find({ id: id })
+      .toArray();
+    // console.log(deal);
+    return deals;
+};*/
+
+
+/**
+ * Best temperature (nouveau filtre)
+ */
+/*const findBestTemperatureDeals = async () => {
+    const db = await connectDB();
+    const collection = db.collection('deals');
+    const deals = await collection.find().sort({ temperature: -1 }).limit(10).toArray();
+    console.log(deals);
+    return deals;
+};*/
+
+
+
 
 /**
  * Export scraping functions to use in mongo.js
@@ -388,79 +404,17 @@ const runPipeline = async () => {
 module.exports = {
     connectDB,
     closeDB, 
-    findBestDiscountDeals, 
-    findMostCommentedDeals, 
-    findBestTemperatureDeals,
-    findDealsSortedByPriceAsc, 
-    findDealsSortedByPriceDesc, 
-    findDealsSortedByDateOld, 
-    findDealsSortedByDateNew,
-    findDealById,
+    // findBestDiscountDeals, 
+    // findMostCommentedDeals, 
+    // findBestTemperatureDeals,
+    // findDealsSortedByPriceAsc, 
+    // findDealsSortedByPriceDesc, 
+    // findDealsSortedByDateOld, 
+    // findDealsSortedByDateNew,
+    // findDealsById,
+    // findDealBySpecId,
     calculatePriceIndicators,
     calculateLifetimeValue, 
     findDealsByFilters,
     findSalesByLegoSetId
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-// Sales Lego Set Id
-const findSalesByLegoSetId = async (legoSetId) => {
-    const db = await connectDB();
-    const collection = db.collection('sales');
-    const sales = await collection.find({ legoSetId }).toArray();
-    console.log(sales);
-    return sales;
-};
-
-// Sales -3 weeks
-const findRecentSales = async () => {
-    const db = await connectDB();
-    const threeWeeksAgo = new Date();
-    threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
-
-    const collection = db.collection('sales');
-    const sales = await collection.find({ date: { $gte: threeWeeksAgo } }).toArray();
-    console.log(sales);
-    return sales;
-};
-
-// Export
-module.exports = {
-    insertDeals,
-    insertSales,
-    findBestDiscountDeals,
-    findMostCommentedDeals,
-    findDealsSortedByPrice,
-    findDealsSortedByDate,
-    findSalesByLegoSetId,
-    findRecentSales
-};
-
-
-*/

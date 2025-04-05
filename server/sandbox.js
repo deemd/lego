@@ -9,15 +9,7 @@ const scrapers = {
 
 
 
-/**
- * Extracts a lego set id from a given URL link
- * @param {string} url - The website URL
- */
-function extractLegoSetId(url) {
-  const regex = /\b\d{4,6}\b/; /*/lego-(\d{5})/i;*/
-  const match = url.match(regex);
-  return match ? match[0] : null; // match[1]
-} // no need anymore, just use the id attribute of deals
+
 
 
 
