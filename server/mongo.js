@@ -157,11 +157,25 @@ const findDealsByFilters = async ({ price, filterBy, limit = 35, legoSetId }) =>
   
     return results;
   };
+
+/**
+ * Find a deal by SPEC-ID
+ * Retrieves a specific deal from the database using its unique SPEC-ID.
+ * @param {String} id - The unique identifier of the deal (SPEC-ID).
+ * @returns {Object|null} - The deal document if found, or null if no deal matches the provided SPEC-ID.
+ */
+const findDealBySpecId = async (id) => {
+    const db = await connectDB();
+    const deal = await db.collection('deals')
+    .findOne({ _id: new ObjectId(id) });
+    // console.log(deal);
+    return deal;
+};
   
 
 
 
-  /**
+/**
  * Calculate price indicators (average, p5, p25, p50)
  * Calculates various price statistics (average, p5, p25, p50) for sales of a given LEGO set.
  * @param {String} legoSetId - LEGO set ID to calculate price indicators for.
@@ -309,7 +323,6 @@ const runPipeline = async () => {
     return deals;
 };*/
 
-
 /**
  * Most commented
  */
@@ -320,7 +333,6 @@ const runPipeline = async () => {
     console.log(deals);
     return deals;
 };*/
-
 
 /**
  * Sorted price (Asc/Desc)
@@ -340,7 +352,6 @@ const runPipeline = async () => {
     return deals;
 };*/
 
-
 /**
  * Sorted date (Old/New)
  */
@@ -359,18 +370,6 @@ const runPipeline = async () => {
     return deals;
 };*/
 
-
-/**
- * Find a deal by SPEC-ID
- */
-/*const findDealBySpecId = async (id) => {
-    const db = await connectDB();
-    const deal = await db.collection('deals')
-    .findOne({ _id: new ObjectId(id) }); // .find({ _id: id });
-    // console.log(deal);
-    return deal;
-};*/
-
 /**
  * Find a deal by Lego Set ID
  */
@@ -382,7 +381,6 @@ const runPipeline = async () => {
     // console.log(deal);
     return deals;
 };*/
-
 
 /**
  * Best temperature (nouveau filtre)
@@ -412,7 +410,7 @@ module.exports = {
     // findDealsSortedByDateOld, 
     // findDealsSortedByDateNew,
     // findDealsById,
-    // findDealBySpecId,
+    findDealBySpecId,
     calculatePriceIndicators,
     calculateLifetimeValue, 
     findDealsByFilters,

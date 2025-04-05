@@ -214,4 +214,24 @@ async function startServer() {
   }
 }
 
-startServer(); // Launch server
+/**
+ * Export handler for Vercel
+ */
+let isConnected = false;
+module.exports = async (req, res) => {
+  if (!isConnected) {
+    await connectDB();
+    isConnected = true;
+  }
+  return app(req, res);
+};
+
+/**
+ * Proper connexion closure to MongoDB
+ */
+process.on('SIGINT', async () => {
+  await closeDB();
+  process.exit(0);
+});
+
+// startServer(); // Launch server
