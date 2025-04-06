@@ -35,15 +35,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  document.querySelectorAll('.heart-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      const icon = this.querySelector('i');
-      this.classList.toggle('active');
-      icon.classList.toggle('fas');
-      icon.classList.toggle('far');
-      icon.style.color = this.classList.contains('active') ? 'red' : '#3A7BD5';
-    });
+  document.body.addEventListener('click', function(e) {
+    const btn = e.target.closest('.heart-btn');
+    if (!btn) return;
+  
+    const icon = btn.querySelector('i');
+    btn.classList.toggle('active');
+    icon.classList.toggle('fas');
+    icon.classList.toggle('far');
+    icon.style.color = btn.classList.contains('active') ? 'red' : '#3A7BD5';
+  
+    const dealId = btn.dataset.id;
+    console.log("❤️ Click sur le coeur :", dealId);
+  
+    let favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+    if (favorites.includes(dealId)) {
+      favorites = favorites.filter(id => id !== dealId);
+    } else {
+      favorites.push(dealId);
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
   });
+  
 
   initTheme();
 });

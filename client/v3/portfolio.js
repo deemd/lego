@@ -213,6 +213,7 @@ const renderDeals = (deals) => {
 
   deals.forEach(deal => {
     const {
+      _id,
       id,
       title,
       price,
@@ -228,7 +229,7 @@ const renderDeals = (deals) => {
     dealCard.innerHTML = `
       <div class="deal-header">
         <h3 class="deal-title">${title}</h3>
-        <button class="heart-btn"><i class="far fa-heart"></i></button>
+        <button class="heart-btn" data-id="${_id}"><i class="far fa-heart"></i></button>
       </div>
 
       <img src="${photo}" alt="LEGO Set" class="deal-image">
@@ -369,7 +370,7 @@ const fetchAndDisplayDeals = async () => {
   const selectedSetId = localStorage.getItem("selectedSetId") || "all";
   // console.log("fetchAndDisplayDeals selectedSortBy :", localStorage.getItem("sortBy"));
   const sortBy = localStorage.getItem("sortBy") || "date-new";
-  
+
   const filterByList = [sortBy];
 
   if (activeFilters.includes("popular")) filterByList.push("most-commented");
@@ -463,7 +464,9 @@ filterBtns.discount.addEventListener('click', () => toggleFilter("discount"));
 filterBtns.favorites.addEventListener('click', () => toggleFilter("favorites"));
 filterBtns.clear.addEventListener('click', clearAllFilters);
 
-//document.addEventListener("DOMContentLoaded", () => {
+
+
+
 window.onload = () => {
   console.log("selectedSetId dans localStorage:", localStorage.getItem("selectedSetId"));
   console.log("Sort By dans localStorage:", localStorage.getItem("sortBy"));  // Ajouter un log pour inspecter la valeur dans le localStorage
@@ -481,11 +484,3 @@ window.onload = () => {
   updateFilterUI();
   fetchAndDisplayDeals();
 };
-//});
-
-
-
-
-
-
-
