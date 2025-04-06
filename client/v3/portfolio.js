@@ -76,6 +76,10 @@ const fetchDeals = async (filters = {}) => {
       params.append('legoSetId', filters.legoSetId);
     }
 
+    // console.log("url filters.price:", filters.price);
+    // console.log("url filters.filterBy:", filters.filterBy);
+    // console.log("url filters.limit:", filters.limit);
+
     // Debug
     const url = `https://lego-deemd.vercel.app/deals/search?${params.toString()}`;
     console.log('Requesting URL:', url);
@@ -264,13 +268,47 @@ const renderDeals = (deals) => {
  * @param  {Array} deals - Array of deal objects
  */
 const renderSelectorLegoSet = (deals) => {
-  const ids = [...new Set(deals.map(deal => deal.id))]; // Only uniques
+  // Retrieve sets IDs from localStorage or create if needed (one-time-only)
+  let ids = JSON.parse(localStorage.getItem("legoSetIds")) || [];
+
+  // If no IDs in localStorage, save current ones
+  if (ids.length === 0) {
+    ids = [...new Set(deals.map(deal => deal.id))];
+    localStorage.setItem("legoSetIds", JSON.stringify(ids));
+  }
+
   const options = [
     `<option value="all">All sets</option>`, // Default option
     ...ids.map(id => `<option value="${id}">${id}</option>`) // Other options
   ].join('');
 
   selectLegoSet.innerHTML = options;
+
+  const selectedSetId = localStorage.getItem("selectedSetId") || "all";
+  selectLegoSet.value = selectedSetId;
+};
+
+/**
+ * Render Sort By selector (from deals)
+ */
+const renderSelectorSortBy = () => {
+  const sortOptions = [
+    { value: 'date-new', label: 'Newest First' },
+    { value: 'date-old', label: 'Oldest First' },
+    { value: 'price-asc', label: 'Cheaper First' },
+    { value: 'price-desc', label: 'Expensive First' }
+  ];
+
+  const options = sortOptions
+    .map(option => `<option value="${option.value}">${option.label}</option>`)
+    .join('');
+
+  // Remplir le sélecteur avec les options
+  selectSortBy.innerHTML = options;
+
+  // Récupérer la valeur de tri depuis localStorage et la définir dans le select
+  const selectedSortBy = localStorage.getItem('sortBy') || 'date-new';
+  selectSortBy.value = selectedSortBy;
 };
 
 /**
@@ -278,19 +316,19 @@ const renderSelectorLegoSet = (deals) => {
  * @param  {Object} indicators - { average, p5, p25, p50 }
  * @param  {String} lifetime - string like "1 days"
  */
-const renderIndicators = (indicators, lifetime) => {
+const renderIndicators = (deals, sales, indicators, lifetime) => {
   const { average, p5, p25, p50 } = indicators;
   pP5Price.innerHTML = `$${p5}`;
   pMedianPrice.innerHTML = `$${p50}`;
   pLifetime.innerHTML = lifetime;
-  pTotalDeals.innerHTML = currentDeals.length || 0;
-  pActiveSales.innerHTML = currentSales.length;  
+  pTotalDeals.innerHTML = deals.length || 0; // currentDeals
+  pActiveSales.innerHTML = sales.length;  // currentSales
 };
 
 /**
  * Global rendering
  */
-const render = (deals, indicators, lifetime) => {
+const render = (deals, sales, indicators, lifetime) => {
   console.log('Paramètres de render:', { deals, indicators, lifetime });
 
   if (!deals || deals.length === 0) {
@@ -300,7 +338,8 @@ const render = (deals, indicators, lifetime) => {
   renderDeals(deals);
   // renderSales(sales);
   renderSelectorLegoSet(deals);
-  renderIndicators(indicators, lifetime);
+  renderSelectorSortBy();
+  renderIndicators(deals, sales, indicators, lifetime);
 };
 
 
@@ -326,17 +365,13 @@ const clearAllFilters = () => {
 const fetchAndDisplayDeals = async () => {
   const activeFilters = JSON.parse(localStorage.getItem("activeFilters")) || [];
   const maxPrice = localStorage.getItem("maxPrice") || 200;
+  // console.log("fetchAndDisplayDeals selectedSetID :", localStorage.getItem("selectedSetId"));
   const selectedSetId = localStorage.getItem("selectedSetId") || "all";
-  const sortBy = localStorage.getItem("sortBy") || "Newest First";
+  // console.log("fetchAndDisplayDeals selectedSortBy :", localStorage.getItem("sortBy"));
+  const sortBy = localStorage.getItem("sortBy") || "date-new";
+  
+  const filterByList = [sortBy];
 
-  const filterByMap = {
-    "Newest First": "date-new",
-    "Oldest First": "date-old",
-    "Cheaper First": "price-asc",
-    "Expensive First": "price-desc"
-  };
-
-  const filterByList = [filterByMap[sortBy]];
   if (activeFilters.includes("popular")) filterByList.push("most-commented");
   if (activeFilters.includes("hot")) filterByList.push("best-temperature");
   if (activeFilters.includes("discount")) filterByList.push("best-discount");
@@ -350,22 +385,30 @@ const fetchAndDisplayDeals = async () => {
     filters.legoSetId = selectedSetId;
   }
 
-  // Log avant de récupérer les données
+  // Debug : Log before retrieving deals data
   console.log('Fetching deals avec les filtres:', filters);
 
   const deals = await fetchDeals(filters);
 
-  // Vérification des données
-  console.log('Deals récupérés:', deals); // Log détaillé pour afficher la valeur exacte de 'deals'
-
-  // Vérifier que des offres ont été récupérées
   if (deals.length === 0) {
     console.log("Aucune offre trouvée.");
-    // Afficher un message d'alerte ou un message vide dans l'UI si besoin
     return;
   }
 
-  console.log("Offres récupérées:", deals.length); // Log du nombre de deals récupérés
+  // Debug : Log of exact retrieved deals number
+  console.log("Deals récupérés:", deals.length);
+
+  const sales = await fetchSales(selectedSetId);
+  const salesArray = sales.result || [];
+
+  if (salesArray.length === 0) {
+    console.log("Aucune vente trouvée.");
+    return;
+  }
+
+  // Debug : Log of exact retrieved sales number
+  console.log("Sales récupérées:", salesArray.length);
+
 
   const [indicators, lifetime] = await Promise.all([
     fetchPriceIndicators(selectedSetId),
@@ -373,7 +416,8 @@ const fetchAndDisplayDeals = async () => {
   ]);
 
   setCurrentDeals(deals);
-  render(deals, indicators, lifetime);
+  setCurrentSales(salesArray);
+  render(deals, salesArray, indicators, lifetime);
   updateFilterUI();
 };
 
@@ -388,8 +432,30 @@ const updateFilterUI = () => {
   });
 };
 
-selectLegoSet.addEventListener("change", fetchAndDisplayDeals);
-selectSortBy.addEventListener("change", fetchAndDisplayDeals);
+selectLegoSet.addEventListener('change', (e) => {
+  // Debug
+  const selectedSetId = e.target.value;
+  console.log('Nouvelle sélection de set:', selectedSetId);
+
+  localStorage.setItem("selectedSetId", selectedSetId);
+
+  // Debug
+  console.log('Local Storage seletecSetId event listener:', selectedSetId);
+
+  fetchAndDisplayDeals(); // <--- re-fetch
+});
+selectSortBy.addEventListener('change', (e) => {
+  // Debug
+  const selectedSortBy = e.target.value;
+  console.log('Nouvelle sélection de tri:', selectedSortBy);
+
+  localStorage.setItem("sortBy", selectedSortBy);
+
+  // Debug
+  console.log('Local Storage seletecSortBy event listener:', selectedSortBy);
+
+  fetchAndDisplayDeals(); // <--- re-fetch
+});
 
 filterBtns.popular.addEventListener('click', () => toggleFilter("popular"));
 filterBtns.hot.addEventListener('click', () => toggleFilter("hot"));
@@ -399,8 +465,6 @@ filterBtns.clear.addEventListener('click', clearAllFilters);
 
 //document.addEventListener("DOMContentLoaded", () => {
 window.onload = () => {
-  console.log("Page complètement chargée");
-  // Afficher ce qui est stocké dans le localStorage
   console.log("selectedSetId dans localStorage:", localStorage.getItem("selectedSetId"));
   console.log("Sort By dans localStorage:", localStorage.getItem("sortBy"));  // Ajouter un log pour inspecter la valeur dans le localStorage
   

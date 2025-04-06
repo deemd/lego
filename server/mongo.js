@@ -181,7 +181,7 @@ const findDealBySpecId = async (id) => {
  * @param {String} legoSetId - LEGO set ID to calculate price indicators for.
  * @returns {Object} - Price indicators (average, p5, p25, p50).
  */
-const calculatePriceIndicators = async (legoSetId) => {
+/*const calculatePriceIndicators = async (legoSetId) => {
     const db = await connectDB();
     const salesCollection = db.collection('sales');
 
@@ -199,7 +199,41 @@ const calculatePriceIndicators = async (legoSetId) => {
     const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
 
     return { average, p5, p25, p50 };
+};*/
+/**
+ * Calculate price indicators (average, p5, p25, p50)
+ * Calculates various price statistics (average, p5, p25, p50) for sales of a given LEGO set,
+ * or for all sets if legoSetId is 'all'.
+ * @param {String} legoSetId - LEGO set ID to calculate price indicators for.
+ * @returns {Object} - Price indicators (average, p5, p25, p50).
+ */
+const calculatePriceIndicators = async (legoSetId) => {
+  const db = await connectDB();
+  const salesCollection = db.collection('sales');
+
+  const query = legoSetId === 'all' ? {} : { id: legoSetId };
+  const sales = await salesCollection.find(query).toArray();
+
+  if (!sales.length) return { average: 0, p5: 0, p25: 0, p50: 0 };
+
+  const prices = sales
+    .map((sale) => parseFloat(sale.price))
+    .filter((price) => !isNaN(price));
+
+  if (prices.length === 0) return { average: 0, p5: 0, p25: 0, p50: 0 };
+
+  const sortedPrices = [...prices].sort((a, b) => a - b);
+
+  const average = (
+    sortedPrices.reduce((sum, price) => sum + price, 0) / prices.length
+  ).toFixed(2);
+  const p5 = sortedPrices[Math.floor(0.05 * (prices.length - 1))].toFixed(2);
+  const p25 = sortedPrices[Math.floor(0.25 * (prices.length - 1))].toFixed(2);
+  const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
+
+  return { average, p5, p25, p50 };
 };
+
 
 /**
  * Calculate sales lifetime
@@ -207,7 +241,7 @@ const calculatePriceIndicators = async (legoSetId) => {
  * @param {String} legoSetId - LEGO set ID to calculate the sales lifetime for.
  * @returns {String} - The lifetime in days or an error message if no sales found.
  */
-const calculateLifetimeValue = async (legoSetId) => {
+/*const calculateLifetimeValue = async (legoSetId) => {
     const db = await connectDB();
     const sales = await db.collection('sales').find({ id: legoSetId }).toArray();
   
@@ -230,7 +264,41 @@ const calculateLifetimeValue = async (legoSetId) => {
     const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24));
   
     return `${lifetimeInDays} days`;
-};
+};*/
+/**
+ * Calculate sales lifetime
+ * Calculates the duration between the earliest and latest sale for a given LEGO set,
+ * or for all sets if legoSetId is 'all'.
+ * @param {String} legoSetId - LEGO set ID to calculate the sales lifetime for.
+ * @returns {String} - The lifetime in days or an error message if no sales found.
+ */
+const calculateLifetimeValue = async (legoSetId) => {
+    const db = await connectDB();
+  
+    const query = legoSetId === 'all' ? {} : { id: legoSetId };
+    const sales = await db.collection('sales').find(query).toArray();
+  
+    if (sales.length === 0) {
+      return "No sales";
+    }
+  
+    const dates = sales
+      .map((sale) => new Date(sale.published))
+      .filter((d) => !isNaN(d)); // Vérifie que la date est valide
+  
+    if (dates.length === 0) {
+      return "Invalid date format in sales data";
+    }
+  
+    const earliestDate = new Date(Math.min(...dates));
+    const latestDate = new Date(Math.max(...dates));
+  
+    const lifetimeInMs = latestDate - earliestDate;
+    const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24));
+  
+    return `${lifetimeInDays} days`;
+  };
+  
 
 /**
  * Find sales by LEGO set ID
@@ -238,7 +306,7 @@ const calculateLifetimeValue = async (legoSetId) => {
  * @param {String} legoSetId - The LEGO set ID to search sales for.
  * @returns {Array} - Array of sales matching the LEGO set ID.
  */
-const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
+/*const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
     const db = await connectDB();
 
     const results = await db.collection('sales')
@@ -248,7 +316,28 @@ const findSalesByLegoSetId = async (legoSetId) => { // , limit = 12
         .toArray();
 
     return results;
+};*/
+/**
+ * Find sales by LEGO set ID
+ * Retrieves sales for a given LEGO set ID, or all sales if 'all' is passed,
+ * sorted by the most recent sale.
+ * @param {String} legoSetId - The LEGO set ID to search sales for, or 'all' for all sales.
+ * @returns {Array} - Array of sales matching the LEGO set ID or all sales.
+ */
+const findSalesByLegoSetId = async (legoSetId) => {
+  const db = await connectDB();
+
+  const query = legoSetId === 'all' ? {} : { id: legoSetId };
+
+  const results = await db.collection('sales')
+    .find(query)
+    .sort({ published: -1 })
+    //.limit(parseInt(limit)) // You can re-enable this if needed
+    .toArray();
+
+  return results;
 };
+
 
 
 
