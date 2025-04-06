@@ -23,7 +23,7 @@ This endpoint accepts the following optional query string parameters:
 
 // current deals on the page
 let currentDeals = [];
-let currentPagination = {};
+let currentPagination = {}; // no use
 let currentSales = [];
 
 // instantiate the selectors
@@ -50,9 +50,8 @@ const sectionSales= document.querySelector('#sales');
  * @param {Array} result - deals to display
  * @param {Object} meta - pagination meta info
  */
-const setCurrentDeals = ({result, meta}) => {
+const setCurrentDeals = ({result}) => {
   currentDeals = result;
-  currentPagination = meta;
 };
 
 /**
@@ -65,26 +64,24 @@ const setCurrentSales = ({result}) => {
 
 /**
  * Fetch deals from api
- * @param  {Number}  [page=1] - current page to fetch
- * @param  {Number}  [size=12] - size of the page
  * @return {Object}
  */
-const fetchDeals = async (page = 1, size = 6) => {
+const fetchDeals = async () => {
   try {
     const response = await fetch(
-      `https://lego-api-blue.vercel.app/deals?page=${page}&size=${size}`
+      `https://lego-deemd.vercel.app/deals/search`
     );
     const body = await response.json();
 
     if (body.success !== true) {
       console.error(body);
-      return {currentDeals, currentPagination};
+      return {currentDeals};
     }
 
     return body.data;
   } catch (error) {
     console.error(error);
-    return {currentDeals, currentPagination};
+    return {currentDeals};
   }
 };
 
@@ -93,10 +90,10 @@ const fetchDeals = async (page = 1, size = 6) => {
  * @param  {Number}  [id=1] - current id to fetch
  * @return {Object} - sales data
  */
-const fetchSales = async (id = 42182) => {
+const fetchSales = async (id = 60337) => {
   try {
     const response = await fetch(
-      `https://lego-api-blue.vercel.app/sales?id=${id}`
+      `https://lego-deemd.vercel.app/sales/search?id=${id}`
     );
     const body = await response.json();
 
@@ -111,6 +108,63 @@ const fetchSales = async (id = 42182) => {
     return {currentSales};
   }
 };
+
+
+
+
+
+
+
+
+
+
+/**
+ * Fetch price indicators from custom API
+ * @param {Number} id
+ * @returns {Object} - { average, p5, p25, p50 }
+ */
+const fetchPriceIndicators = async (id) => {
+  try {
+    const response = await fetch(`http://lego-deemd.vercel.app/sales/${id}/price-indicators`);
+    const indicators = await response.json();
+    return {
+      average: indicators.average,
+      p5: indicators.p5,
+      p25: indicators.p25,
+      p50: indicators.p50
+    };
+  } catch (error) {
+    console.error('Erreur lors du fetch des indicateurs de prix :', error);
+    return { average: 0, p5: 0, p25: 0, p50: 0 };
+  }
+};
+
+/**
+ * Fetch lifetime value from custom API
+ * @param {Number} id
+ * @returns {String}
+ */
+const fetchLifetimeValue = async (id) => {
+  try {
+    const response = await fetch(`http://lego-deemd.vercel.app/sales/${id}/lifetime-value`);
+    const { lifetimeValue } = await response.json();
+    return lifetimeValue;
+  } catch (error) {
+    console.error('Erreur lors du fetch de la lifetime value :', error);
+    return 'N/A';
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Render list of deals
@@ -133,13 +187,13 @@ const renderDeals = deals => {
 
     const template = deals
       .map((deal) => {
-        const isFavorite = isFavoriteDeal(deal.uuid); // Vérifie si le deal est favori
+        const isFavorite = isFavoriteDeal(deal._id); // Vérifie si le deal est favori
         return `
-        <div class="deal" id=${deal.uuid}>
+        <div class="deal" id=${deal._id}>
           <span>${deal.id}</span>
           <a href="${deal.link}" target="_blank">${deal.title}</a>
           <span>${deal.price}</span>
-          <button class="favorite-btn" data-uuid="${deal.uuid}">
+          <button class="favorite-btn" data-uuid="${deal._id}">
             ${isFavorite ? '★ Remove Favorite' : '☆ Add Favorite'}
           </button>
         </div>
@@ -155,7 +209,7 @@ const renderDeals = deals => {
   // Ajout d'un listener pour les boutons favoris
   document.querySelectorAll('.favorite-btn').forEach((button) => {
     button.addEventListener('click', (e) => {
-      const uuid = e.target.dataset.uuid;
+      const uuid = e.target.dataset._id;
       toggleFavoriteDeal(uuid);
       renderDeals(deals); // Recharge les deals pour mettre à jour les favoris
     });
@@ -173,7 +227,7 @@ const renderSales = sales => {
   const template = sales
     .map(sale => {
       return `
-      <div class="sale" id=${sale.uuid}>
+      <div class="sale" id=${sale._id}>
         <a href="${sale.link}" target="_blank">${sale.title}</a> <!-- Open in new tab -->
         <span>${sale.price}</span>
       </div>
@@ -260,7 +314,7 @@ const render = (deals, sales, pagination) => {
  * Calculate average, p5, p25, and p50 values
  * @returns  {Object} - Calculated statistics
  */
-const calculatePriceIndicators = (deals, sales) => {
+/*const calculatePriceIndicators = (deals, sales) => {
   // add fetch prices
   // Combine prices from both deals and sales
   const dealPrices = deals.map((deal) => parseFloat(deal.price));
@@ -277,14 +331,14 @@ const calculatePriceIndicators = (deals, sales) => {
   const p50 = sortedPrices[Math.floor(0.5 * (prices.length - 1))].toFixed(2);
 
   return { average, p5, p25, p50 };
-};
+};*/
 
 /**
  * Calculate the lifetime value for a set
  * @param {Array} sales - List of sales data
  * @returns {String} Lifetime value in days or "No sales" if no data
  */
-const calculateLifetimeValue = (sales) => {
+/*const calculateLifetimeValue = (sales) => {
   if (sales.length === 0) {
     return "No sales"; // No sales data available
   }
@@ -297,7 +351,7 @@ const calculateLifetimeValue = (sales) => {
   const lifetimeInDays = Math.ceil(lifetimeInMs / (1000 * 60 * 60 * 24)); // Convert to days
 
   return `${lifetimeInDays} days`;
-};
+};*/
 
 // Gestion des favoris
 const toggleFavoriteDeal = (uuid) => {
@@ -468,7 +522,7 @@ selectSort.addEventListener('change', () => {
 });
 
 /**
- * Sort for cheap and expensive
+ * Sort for dates
  */
 selectSort.addEventListener('change', () => {
   const sortValue = selectSort.value;
@@ -524,6 +578,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   render(currentDeals, currentSales, currentPagination);
   const savedSetId = localStorage.getItem("selectedSetId");
   if (savedSetId) {
+
+
     // Set the select element to the saved value
     selectLegoSetIds.value = savedSetId;
   }

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrickDeals • LEGO Deals Tracker</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <header class="navbar">
+    <div class="logo-container">
+      <i class="fas fa-cube logo-icon"></i>
+      <div class="logo">BrickDeals</div>
+    </div>
+    <div class="dark-mode-container">
+      <i class="fas fa-sun theme-icon"></i>
+      <div class="dark-mode-toggle">
+        <input type="checkbox" id="toggle-theme">
+        <label for="toggle-theme" class="toggle-label">
+          <span class="toggle-ball"></span>
+        </label>
+      </div>
+    </div>
+  </header>
+
+  <div class="selectors-container">
+    <div class="selector-group">
+      <label class="selector-label">Lego Set</label>
+      <div class="select-wrapper">
+        <select class="styled-selector" id="selector-lego-set">
+        </select>
+      </div>
+    </div>
+    
+    <div class="selector-group">
+      <label class="selector-label">Sort By</label>
+      <div class="select-wrapper">
+        <select class="styled-selector" id="selector-sort-by">
+          <option value="date-new">Newest First</option>
+          <option value="date-old">Oldest First</option>
+          <option value="price-asc">Cheaper First</option>
+          <option value="price-desc">Expensive First</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="selector-group">
+      <label class="selector-label">Price Range</label>
+      <div class="price-range-container">
+        <input type="range" id="max-price" min="0" max="500" value="200">
+        <span id="max-price-value">€200</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-buttons">
+      <button class="filter-btn" id="filter-btn-popular">
+        <i class="fas fa-comment-dots"></i> Popular
+      </button>
+      <button class="filter-btn" id="filter-btn-hot">
+        <i class="fas fa-fire"></i> Hot
+      </button>
+      <button class="filter-btn" id="filter-btn-best-discount">
+        <i class="fas fa-percent"></i> Discount
+      </button>
+      <button class="filter-btn" id="filter-btn-favorites">
+        <i class="far fa-heart"></i> Favorites
+      </button>
+      <button class="filter-btn clear" id="filter-btn-clear-all">
+        <i class="fas fa-times"></i> Clear All
+      </button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <p class="stat-value" id="total-deals">0</p>
+      <p class="stat-label">Total Deals</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-value" id="active-sales">0</p>
+      <p class="stat-label">Active Sales</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-value" id="p5-percentile">$0</p>
+      <p class="stat-label">5th Percentile</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-value" id="median-price">$0</p>
+      <p class="stat-label">Median Price</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-value" id="avg-lifetime">0 days</p>
+      <p class="stat-label">Avg Lifetime</p>
+    </div>
+  </div>
+
+  <div class="deals-grid" id="deals-container">
+  </div>
+
+  <script src="script.js"></script>
+  <script type="text/javascript" charset="UTF-8" src="portfolio.js"></script>
+</body>
+</html>
